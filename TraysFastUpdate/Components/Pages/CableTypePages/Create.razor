@@ -1,0 +1,53 @@
+﻿@page "/cabletypes/create"
+
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@using TraysFastUpdate.Models
+@using TraysFastUpdate.Services.Contracts
+@using FluentValidation
+
+@inject ICableTypeService CableTypeService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Create a new Cable Type</MudText>
+<hr />
+<EditForm Model="@CableType" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid Class="d-flex justify-center flex-grow-1 gap-4">
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField @bind-Value="CableType.Type" For="@(() => CableType.Type)" Label="Cable Type" Required="true" RequiredError="Cable Type is required!" />
+                    <MudTextField @bind-Value="CableType.Purpose" For="@(() => CableType.Purpose)" Label="Cable Purpose" Required="true" RequiredError="Cable Purpose is required!" />
+                    <MudNumericField @bind-Value="CableType.Diameter" For="@(() => CableType.Diameter)" Label="Cable Diameter" Required="true" Min="0.01" RequiredError="Cable Diameter is required and must be greater than 0!" />
+                    <MudNumericField @bind-Value="CableType.Weight" For="@(() => CableType.Weight)" Label="Cable Weight" Required="true" Min="0.01" RequiredError="Cable Weight is required and must be greater than 0!" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Create</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+<MudItem Class="d-flex justify-center flex-grow-1 gap-4 ma-2">
+    <MudButton Href="/cabletypes"
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
+        Back to List
+    </MudButton>
+</MudItem>
+
+@code {
+    [SupplyParameterFromForm]
+    private CableType CableType { get; set; } = new CableType();
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        await CableTypeService.CreateCableTypeAsync(CableType);
+        NavigationManager.NavigateTo("/cabletypes");
+    }
+}
