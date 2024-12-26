@@ -1,0 +1,72 @@
+﻿@page "/cables/create"
+
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@using TraysFastUpdate.Models
+@using TraysFastUpdate.Services.Contracts
+@using FluentValidation
+
+@inject ICableService CableService
+@inject ICableTypeService CableTypeService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Create a new Cable Type</MudText>
+<hr />
+<EditForm Model="@Cable" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid Class="d-flex justify-center flex-grow-1 gap-4">
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField @bind-Value="Cable.Tag" For="@(() => Cable.Tag)" Label="Cable Tag" Required="true" RequiredError="Cable Tag is required!" />
+                    <MudSelect @bind-Value="Cable.CableTypeId" Label="Cable Type" Required="true" RequiredError="Cable Type is required!">
+                        @foreach (var cableType in cableTypes)
+                        {
+                            <MudSelectItem Value="@cableType.Id">@cableType.Type</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField @bind-Value="Cable.FromLocation" Label="Cable From Location" Required="false" />
+                    <MudTextField @bind-Value="Cable.ToLocation" Label="Cable To Location" Required="false" />
+                    <MudTextField @bind-Value="Cable.Routing" Label="Cable Routing" Required="false" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Create</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+<MudItem Class="d-flex justify-center flex-grow-1 gap-4 ma-2">
+    <MudButton Href="/cables"
+    Rel="nofollow"
+    Variant="Variant.Filled"
+    Color="Color.Primary">
+        Back to List
+    </MudButton>
+</MudItem>
+
+@code {
+    [SupplyParameterFromForm]
+    private Cable Cable { get; set; } = new Cable();
+
+    private List<CableType> cableTypes = new List<CableType>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cableTypes = await CableTypeService.GetCablesTypesAsync();
+        if (cableTypes.Any())
+        {
+            Cable.CableTypeId = cableTypes.First().Id;
+        }
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        await CableService.CreateCableAsync(Cable);
+        NavigationManager.NavigateTo("/cables");
+    }
+}
+

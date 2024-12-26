@@ -6,6 +6,7 @@ namespace TraysFastUpdate.Models
     {
         [Key]
         public int Id { get; set; }
+        [Required]
         public string Tag { get; set; } = null!;
         public int CableTypeId { get; set; }
         public CableType CableType { get; set; } = null!;
