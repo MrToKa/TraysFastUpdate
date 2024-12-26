@@ -24,6 +24,7 @@ namespace TraysFastUpdate
             builder.Services.AddScoped<ITraysFastUpdateDbRepository, TraysFastUpdateDbRepository>();
             builder.Services.AddScoped<ICableTypeService, CableTypeService>();
             builder.Services.AddScoped<ICableService, CableService>();
+            builder.Services.AddScoped<ITrayService, TrayService>();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<TraysFastUpdateDbContext>(options =>

@@ -1,0 +1,57 @@
+﻿@page "/trays/create"
+
+@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@using TraysFastUpdate.Models
+@using TraysFastUpdate.Services.Contracts
+@using FluentValidation
+
+@inject ITrayService TrayService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Create a new Tray</MudText>
+<hr />
+
+<EditForm Model="@Tray" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid Class="d-flex justify-center flex-grow-1 gap-4">
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField @bind-Value="Tray.Name" For="@(() => Tray.Name)" Label="Tray Name" Required="true" RequiredError="Tray Purpose is required!" />
+                    <MudTextField @bind-Value="Tray.Type" For="@(() => Tray.Type)" Label="Tray Type" Required="true" RequiredError="Tray Type is required!" />
+                    <MudTextField @bind-Value="Tray.Purpose" For="@(() => Tray.Purpose)" Label="Tray Purpose" Required="true" RequiredError="Tray Type is required!" />
+                    <MudNumericField @bind-Value="Tray.Width" For="@(() => Tray.Width)" Label="Tray Width" Required="true" Min="0.01" RequiredError="Tray Width is required and must be greater than 0!" />
+                    <MudNumericField @bind-Value="Tray.Height" For="@(() => Tray.Height)" Label="Tray Height" Required="true" Min="0.01" RequiredError="Tray Height is required and must be greater than 0!" />
+                    <MudNumericField @bind-Value="Tray.Length" For="@(() => Tray.Length)" Label="Tray Length" Required="true" Min="0.01" RequiredError="Tray Length is required and must be greater than 0!" />
+                    <MudNumericField @bind-Value="Tray.Weight" For="@(() => Tray.Weight)" Label="Tray Weight" Required="true" Min="0.01" RequiredError="Tray Weight is required and must be greater than 0!" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Create</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+<MudItem Class="d-flex justify-center flex-grow-1 gap-4 ma-2">
+    <MudButton Href="/trays"
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
+        Back to List
+    </MudButton>
+</MudItem>
+
+@code {
+    [SupplyParameterFromForm]
+    private Tray Tray { get; set; } = new();
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        await TrayService.CreateTrayAsync(Tray);
+        NavigationManager.NavigateTo("/trays");
+    }
+}

@@ -1,0 +1,101 @@
+﻿@page "/trays/details/{Id:int}"
+
+@using TraysFastUpdate.Models
+@using TraysFastUpdate.Services
+@using TraysFastUpdate.Services.Contracts
+
+@inject ITrayService TrayService
+@inject ICableService CableService
+@inject ISnackbar Snackbar
+
+<PageTitle>Details</PageTitle>
+
+<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Tray Details</MudText>
+
+<MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
+    <MudButton Href="/trays"
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
+        Back to List
+    </MudButton>
+</MudItem>
+
+<MudPaper Elevation="0" Class="pa-1 ma-1">
+    <EditForm Model="@Tray" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <MudGrid Class="d-flex justify-center flex-grow-1 gap-4 pa-1 ma-1">
+            <MudItem xs="12" sm="7" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField @bind-Value="Tray.Name" For="@(() => Tray.Name)" Label="Tray Name" ReadOnly="true" />
+                        <MudTextField @bind-Value="Tray.Type" For="@(() => Tray.Type)" Label="Tray Type" ReadOnly="false" />
+                        <MudTextField @bind-Value="Tray.Purpose" For="@(() => Tray.Purpose)" Label="Tray Purpose" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Width" For="@(() => Tray.Width)" Label="Tray Width" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Height" For="@(() => Tray.Height)" Label="Tray Height" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Length" For="@(() => Tray.Length)" Label="Tray Length" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Weight" For="@(() => Tray.Weight)" Label="Tray Weight" ReadOnly="false" />
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Save changes</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudPaper>
+
+<MudPaper Elevation="0" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+    @if (CablesOnTray == null || CablesOnTray.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No cables found.</MudAlert>
+    }
+    else
+    {
+        <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
+                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+            <Columns>
+                <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
+                    <CellTemplate>
+                        @(CablesOnTray.IndexOf(context.Item) + 1)
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Tag" Title="Cable Tag" Hideable="false" />
+                <PropertyColumn Property="x => x.CableType.Type" Title="Cable Type" Hideable="false" />
+                <PropertyColumn Property="x => x.CableType.Diameter" Title="Cable Diameter [mm]" Hideable="false" />
+                <PropertyColumn Property="x => x.CableType.Weight" Title="Cable Weight [kg/m]" Hideable="false" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager PageSizeOptions="[15, 25, 50]" T="Cable" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudPaper>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Tray Tray { get; set; } = new Tray();
+
+    private List<Cable> CablesOnTray = new List<Cable>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tray = await TrayService.GetTrayAsync(Id);
+        CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            await TrayService.UpdateTrayAsync(Tray);
+            Snackbar.Add("Tray details updated successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating tray details: {ex.Message}", Severity.Error);
+        }
+    }
+}

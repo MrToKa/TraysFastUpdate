@@ -1,4 +1,4 @@
-﻿@page "/cabletypes"
+﻿@page "/trays"
 
 @using Microsoft.EntityFrameworkCore
 @using TraysFastUpdate.Components.Pages.Dialogs
@@ -7,27 +7,28 @@
 @using TraysFastUpdate.Services
 @using TraysFastUpdate.Services.Contracts
 
-@inject ICableTypeService CableTypeService
+@inject ITrayService TrayService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 <PageTitle>Index</PageTitle>
 
-<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Cable Types</MudText>
+<MudText Typo="Typo.h5" Class="d-flex justify-center flex-grow-1 gap-4">Cable Trays</MudText>
 
 <MudItem Class="d-flex justify-center align-stretch flex-grow-1 gap-4">
-    <MudButton Href="/cabletypes/create"
+    <MudButton Href="/trays/create"
                Rel="nofollow"
                Variant="Variant.Filled"
                Color="Color.Primary">
-        Add cable type
+        Add Tray
     </MudButton>
     <MudFileUpload @ref="@_fileUpload" T="IBrowserFile" OnFilesChanged="UploadFile" Accept=".xlsx">
         <ActivatorContent>
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.CloudUpload">
-                Add cable types from file
+                Add Trays from file
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
@@ -36,34 +37,37 @@
 <MudPaper Elevation="0" Class="pa-1 ma-2" Style="@($"background: #BDBDBD;")">
     @if (Elements == null || Elements.Count == 0)
     {
-        <MudAlert Severity="Severity.Info">No cables types found.</MudAlert>
+        <MudAlert Severity="Severity.Info">No Trays found.</MudAlert>
     }
     else
     {
-        <MudDataGrid T="CableType" Items="@Elements" ReadOnly="false" EditMode="DataGridEditMode.Cell"
-                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" CommittedItemChanges="@CommittedItemChanges">
+        <MudDataGrid T="Tray" Items="@Elements" ReadOnly="true"
+                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick">
             <Columns>
-                <PropertyColumn Property="x => x.Type" Title="Cable Type" Hideable="false" />
-                <PropertyColumn Property="x => x.Purpose" Title="Cable Purpose" Hideable="false" />
-                <PropertyColumn Property="x => x.Diameter" Title="Cable Diameter [mm]" Hideable="false" />
-                <PropertyColumn Property="x => x.Weight" Title="Cable Weight [kg/m]" Hideable="false" />
+                <PropertyColumn Property="x => x.Name" Title="Tray Name" Hideable="false" />
+                <PropertyColumn Property="x => x.Type" Title="Tray Type" Hideable="false" />
+                <PropertyColumn Property="x => x.Purpose" Title="Tray Purpose" Hideable="false" />
+                <PropertyColumn Property="x => x.Width" Title="Tray Width [mm]" Hideable="false" />
+                <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" />
+                <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" />
+                <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" />
                 <TemplateColumn Title="Actions" CellClass="d-flex justify-end" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
                         <MudTooltip Text="Delete">
-                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteCableAsync(context.Item.Id))" />
+                            <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" OnClick="@(() => DeleteTrayAsync(context.Item.Id))" />
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
             <PagerContent>
-                <MudDataGridPager PageSizeOptions="[15, 25, 50]" T="CableType" />
+                <MudDataGridPager PageSizeOptions="[15, 25, 50]" T="Tray" />
             </PagerContent>
         </MudDataGrid>
     }
 </MudPaper>
 
 @code {
-    private List<CableType> Elements = new List<CableType>();
+    private List<Tray> Elements = new List<Tray>();
 
     private MudFileUpload<IBrowserFile> _fileUpload;
 
@@ -77,17 +81,17 @@
 
     private async Task ReloadDataAsync()
     {
-        Elements = await CableTypeService.GetCablesTypesAsync();
+        Elements = await TrayService.GetTraysAsync();
         StateHasChanged();
     }
 
-    private async Task DeleteCableAsync(int cableTypeId)
+    private async Task DeleteTrayAsync(int trayId)
     {
         DialogParameters paremeters = new DialogParameters<DeleteDialog>
             {
-                { x => x.Title , "Delete Cable Type?" },
-                { x => x.Content, "Are you sure you want to delete this cable type?" },
-                { x => x.Result, "Cable type was deleted!" }
+                { x => x.Title , "Delete Tray?" },
+                { x => x.Content, "Are you sure you want to delete this Tray?" },
+                { x => x.Result, "Tray was deleted!" }
             };
 
         var dialogResult = await DialogService.ShowAsync<DeleteDialog>("", paremeters);
@@ -95,22 +99,16 @@
 
         if (!result.Canceled)
         {
-            await CableTypeService.DeleteCableTypeAsync(cableTypeId);
+            await TrayService.DeleteTrayAsync(trayId);
             await ReloadDataAsync();
         }
-    }
-
-    private async Task CommittedItemChanges(CableType item)
-    {
-        Snackbar.Add("Cable type was updated!", Severity.Success);
-        await CableTypeService.UpdateCableTypeAsync(item);
     }
 
     private async Task UploadFile(InputFileChangeEventArgs e)
     {
         try
         {
-            await CableTypeService.UploadFromFileAsync(e.File);
+            await TrayService.UploadFromFileAsync(e.File);
         }
         catch (Exception)
         {
@@ -121,5 +119,10 @@
             await ClearAsync();
             await ReloadDataAsync();
         }
+    }
+
+    private void OnRowClick(DataGridRowClickEventArgs<Tray> args)
+    {
+        NavigationManager.NavigateTo($"/trays/details/{args.Item.Id}");
     }
 }

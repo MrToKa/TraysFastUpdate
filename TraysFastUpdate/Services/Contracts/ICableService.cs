@@ -16,5 +16,7 @@ namespace TraysFastUpdate.Services.Contracts
         Task DeleteCableAsync(int cableId);
 
         Task UploadFromFileAsync(IBrowserFile file);
+
+        Task<List<Cable>> GetCablesOnTrayAsync(Tray tray);
     }
 }

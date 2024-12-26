@@ -2,74 +2,75 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
-using TraysFastUpdate.Data.Repositories;
+using TraysFastUpdate.Data;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
 
 namespace TraysFastUpdate.Services
 {
-    public class CableService : ICableService
+    public class TrayService : ITrayService
     {
-        private readonly ITraysFastUpdateDbRepository _repository;
+        private readonly TraysFastUpdateDbContext _repository;
 
-        public CableService(ITraysFastUpdateDbRepository repository)
+        public TrayService(TraysFastUpdateDbContext repository)
         {
             _repository = repository;
         }
 
-        public async Task CreateCableAsync(Cable cable)
+        public async Task CreateTrayAsync(Tray tray)
         {
-            bool cableExists = await _repository.All<Cable>().AnyAsync(c => c.Tag == cable.Tag && c.CableType == cable.CableType);
-            if (cableExists)
+            bool trayExists = _repository.Trays.Any(t => t.Name == tray.Name);
+            if (trayExists)
             {
                 return;
             }
 
-            await _repository.AddAsync(cable);
+            await _repository.Trays.AddAsync(tray);
             await _repository.SaveChangesAsync();
         }
 
-        public async Task DeleteCableAsync(int cableId)
+        public async Task DeleteTrayAsync(int trayId)
         {
-            var cable = await _repository.All<Cable>().FirstOrDefaultAsync(c => c.Id == cableId);
-            if (cable == null)
+            var tray = await _repository.Trays.FirstOrDefaultAsync(t => t.Id == trayId);
+            if (tray == null)
             {
                 return;
             }
-
-            _repository.Delete(cable);
+            _repository.Trays.Remove(tray);
             await _repository.SaveChangesAsync();
         }
 
-        public async Task<Cable> GetCableAsync(int cableId)
+        public async Task<Tray> GetTrayAsync(int trayId)
         {
-            var cable = await _repository.All<Cable>().FirstOrDefaultAsync(c => c.Id == cableId);
-            return cable ?? throw new InvalidOperationException($"Cable with ID {cableId} not found.");
+            var tray = await _repository.Trays.FirstOrDefaultAsync(t => t.Id == trayId);
+            return tray ?? throw new InvalidOperationException($"Tray with ID {trayId} not found.");
         }
 
-        public async Task<List<Cable>> GetCablesAsync()
+        public async Task<List<Tray>> GetTraysAsync()
         {
-            return await _repository.All<Cable>().ToListAsync();
+            return await _repository.Trays.ToListAsync();
         }
 
-        public async Task UpdateCableAsync(Cable cable)
+        public async Task UpdateTrayAsync(Tray trayId)
         {
-            var cableToUpdate = await _repository.All<Cable>().FirstOrDefaultAsync(c => c.Id == cable.Id);
-            if (cableToUpdate == null)
+            var trayToUpdate = await _repository.Trays.FirstOrDefaultAsync(t => t.Id == trayId.Id);
+            if (trayToUpdate == null)
             {
                 return;
             }
-            cableToUpdate.Tag = cable.Tag;
-            cableToUpdate.CableType = cable.CableType;
-            cableToUpdate.FromLocation = cable.FromLocation;
-            cableToUpdate.ToLocation = cable.ToLocation;
-            cableToUpdate.Routing = cable.Routing;
+            trayToUpdate.Name = trayId.Name;
+            trayToUpdate.Type = trayId.Type;
+            trayToUpdate.Purpose = trayId.Purpose;
+            trayToUpdate.Width = trayId.Width;
+            trayToUpdate.Height = trayId.Height;
+            trayToUpdate.Length = trayId.Length;
+            trayToUpdate.Weight = trayId.Weight;
             await _repository.SaveChangesAsync();
         }
 
         public async Task UploadFromFileAsync(IBrowserFile file)
         {
-            List<Cable> cableTypes = new List<Cable>();
+            List<Tray> trays = new List<Tray>();
             string? value = null;
 
             using MemoryStream memoryStream = new MemoryStream();
@@ -87,7 +88,7 @@ namespace TraysFastUpdate.Services
 
                 for (int i = 1; i < sheetData.Elements<Row>().Count(); i++)
                 {
-                    Cable cable = new Cable();
+                    Tray tray = new Tray();
                     Row row = sheetData.Elements<Row>().ElementAt(i);
                     // get the row number from outerxml
                     int rowNumber = int.Parse(row.RowIndex);
@@ -105,48 +106,42 @@ namespace TraysFastUpdate.Services
 
                         if (cell.CellReference == "A" + rowNumber)
                         {
-                            cable.Tag = value;
+                            tray.Name = value;
                         }
                         else if (cell.CellReference == "B" + rowNumber)
                         {
-                            var ctValue = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Type == value);
-                            cable.CableType = ctValue;
+                            tray.Type = value;
                         }
                         else if (cell.CellReference == "C" + rowNumber)
                         {
-                            cable.FromLocation = value;
+                            tray.Purpose = value;
                         }
                         else if (cell.CellReference == "D" + rowNumber)
                         {
-                            cable.ToLocation = value;
+                            tray.Width = double.Parse(value);
                         }
                         else if (cell.CellReference == "E" + rowNumber)
                         {
-                            cable.Routing = value;
+                            tray.Height = double.Parse(value);
+                        }
+                        else if (cell.CellReference == "F" + rowNumber)
+                        {
+                            tray.Length = double.Parse(value);
+                        }
+                        else if (cell.CellReference == "G" + rowNumber)
+                        {
+                            tray.Weight = double.Parse(value);
                         }
                     }
 
-                    cableTypes.Add(cable);
+                    trays.Add(tray);
                 }
 
-                foreach (var cable in cableTypes)
+                foreach (var tray in trays)
                 {
-                    await this.CreateCableAsync(cable);
+                    await CreateTrayAsync(tray);
                 }
             }
         }
-
-        public async Task<List<Cable>> GetCablesOnTrayAsync(Tray tray)
-        {
-            var cables = await _repository.All<Cable>()
-                .Include(c => c.CableType)
-                .ToListAsync();
-            var filteredCables = cables
-                .Where(c => c.Routing.Split('/')
-                    .Any(segment => string.Equals(segment, tray.Name, StringComparison.OrdinalIgnoreCase)))  // Case-insensitive comparison
-                .ToList();
-
-            return filteredCables;
-        }
-    }    
+    }
 }
