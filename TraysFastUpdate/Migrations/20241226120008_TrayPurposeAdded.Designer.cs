@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using TraysFastUpdate.Data;
+using TraysFastUpdate.Data.Repositories;
 
 #nullable disable
 
 namespace TraysFastUpdate.Migrations
 {
-    [DbContext(typeof(TraysFastUpdateDbContext))]
+    [DbContext(typeof(ITraysFastUpdateDbRepository))]
     [Migration("20241226120008_TrayPurposeAdded")]
     partial class TrayPurposeAdded
     {

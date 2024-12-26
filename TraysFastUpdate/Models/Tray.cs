@@ -20,5 +20,14 @@ namespace TraysFastUpdate.Models
         public double Length { get; set; }
         [Required]
         public double Weight { get; set; }
+        public int? SupportsCount { get; set; }
+        public double? SupportsTotalWeight { get; set; }
+        public double? SupportsWeightLoadPerMeter { get; set; }
+        public double? TrayWeightLoadPerMeter { get; set; }
+        public double? TrayOwnWeightLoad { get; set; }
+        public double? CablesWeightPerMeter { get; set; }
+        public double? CablesWeightLoad { get; set; }
+        public double? TotalWeightLoadPerMeter { get; set; }
+        public double? TotalWeightLoad { get; set; }
     }
 }

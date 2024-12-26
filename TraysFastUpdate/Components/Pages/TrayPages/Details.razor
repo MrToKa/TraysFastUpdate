@@ -26,15 +26,16 @@
         <DataAnnotationsValidator />
         <MudGrid Class="d-flex justify-center flex-grow-1 gap-4 pa-1 ma-1">
             <MudItem xs="12" sm="7" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+                <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Tray general information</MudText>
                 <MudCard>
                     <MudCardContent>
                         <MudTextField @bind-Value="Tray.Name" For="@(() => Tray.Name)" Label="Tray Name" ReadOnly="true" />
                         <MudTextField @bind-Value="Tray.Type" For="@(() => Tray.Type)" Label="Tray Type" ReadOnly="false" />
                         <MudTextField @bind-Value="Tray.Purpose" For="@(() => Tray.Purpose)" Label="Tray Purpose" ReadOnly="false" />
-                        <MudNumericField @bind-Value="Tray.Width" For="@(() => Tray.Width)" Label="Tray Width" ReadOnly="false" />
-                        <MudNumericField @bind-Value="Tray.Height" For="@(() => Tray.Height)" Label="Tray Height" ReadOnly="false" />
-                        <MudNumericField @bind-Value="Tray.Length" For="@(() => Tray.Length)" Label="Tray Length" ReadOnly="false" />
-                        <MudNumericField @bind-Value="Tray.Weight" For="@(() => Tray.Weight)" Label="Tray Weight" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Width" For="@(() => Tray.Width)" Label="Tray Width [mm]" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Height" For="@(() => Tray.Height)" Label="Tray Height [mm]" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Length" For="@(() => Tray.Length)" Label="Tray Length [mm]" ReadOnly="false" />
+                        <MudNumericField @bind-Value="Tray.Weight" For="@(() => Tray.Weight)" Label="Tray Weight [kg/m]" ReadOnly="false" />
                     </MudCardContent>
                     <MudCardActions>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Save changes</MudButton>
@@ -46,6 +47,7 @@
 </MudPaper>
 
 <MudPaper Elevation="0" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+    <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Cables on tray</MudText>
     @if (CablesOnTray == null || CablesOnTray.Count == 0)
     {
         <MudAlert Severity="Severity.Info">No cables found.</MudAlert>
@@ -70,6 +72,27 @@
             </PagerContent>
         </MudDataGrid>
     }
+</MudPaper>
+
+<MudPaper>
+    <MudGrid Class="d-flex justify-center flex-grow-1 gap-4 pa-1 ma-1">
+        <MudItem xs="12" sm="7" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+            <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Tray Weight Calculations</MudText>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField @bind-Value="Tray.SupportsCount" For="@(() => Tray.SupportsCount)" Label="Supports count" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.SupportsTotalWeight" For="@(() => Tray.SupportsTotalWeight)" Label="Total Supports Weight [kg]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.SupportsWeightLoadPerMeter" For="@(() => Tray.SupportsWeightLoadPerMeter)" Label="Supports weight load per meter [kg/m]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.TrayWeightLoadPerMeter" For="@(() => Tray.TrayWeightLoadPerMeter)" Label="Tray weight load per meter [kg/m]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.TrayOwnWeightLoad" For="@(() => Tray.TotalWeightLoad)" Label="Tray total own weight [kg]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.CablesWeightPerMeter" For="@(() => Tray.CablesWeightPerMeter)" Label="Cables weight load per meter [kg/m]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.CablesWeightLoad" For="@(() => Tray.CablesWeightLoad)" Label="Cables total weight on the tray [kg]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.TotalWeightLoadPerMeter" For="@(() => Tray.TotalWeightLoadPerMeter)" Label="Total tray weight load per meter [kg/m]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.TotalWeightLoad" For="@(() => Tray.TotalWeightLoad)" Label="Total tray weight [kg]" ReadOnly="true" />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 </MudPaper>
 
 @code {
