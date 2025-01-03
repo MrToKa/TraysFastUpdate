@@ -22,6 +22,7 @@ namespace TraysFastUpdate.Services
             bool cableTypeExists = await _repository.All<CableType>().AnyAsync(c => c.Type == cableType.Type);
             if (cableTypeExists)
             {
+                await UpdateCableTypeAsync(cableType);
                 return;
             }
 
@@ -53,7 +54,7 @@ namespace TraysFastUpdate.Services
 
         public async Task UpdateCableTypeAsync(CableType cableType)
         {
-            var cableTypeToUpdate = await _repository.All<CableType>().FirstOrDefaultAsync(c => c.Id == cableType.Id);
+            var cableTypeToUpdate = await _repository.All<CableType>().FirstOrDefaultAsync(c => c.Type == cableType.Type);
             if (cableTypeToUpdate == null)
             {
                 return;

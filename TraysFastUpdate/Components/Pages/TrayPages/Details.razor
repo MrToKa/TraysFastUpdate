@@ -3,6 +3,8 @@
 @using TraysFastUpdate.Models
 @using TraysFastUpdate.Services
 @using TraysFastUpdate.Services.Contracts
+@using Excubo.Blazor.Canvas
+@inject Microsoft.JSInterop.IJSRuntime js;
 
 @inject ITrayService TrayService
 @inject ICableService CableService
@@ -14,9 +16,9 @@
 
 <MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
     <MudButton Href="/trays"
-               Rel="nofollow"
-               Variant="Variant.Filled"
-               Color="Color.Primary">
+    Rel="nofollow"
+    Variant="Variant.Filled"
+    Color="Color.Primary">
         Back to List
     </MudButton>
 </MudItem>
@@ -55,7 +57,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
-                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+        Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
@@ -95,6 +97,12 @@
     </MudGrid>
 </MudPaper>
 
+<MudPaper>
+    <MudItem Class="pa-1 ma-1">
+        <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black" />
+    </MudItem>
+</MudPaper>
+
 @code {
     [Parameter]
     public int Id { get; set; }
@@ -103,9 +111,33 @@
 
     private List<Cable> CablesOnTray = new List<Cable>();
 
+    private Canvas canvas = new Canvas();
+
+    private int canvasScale = 3;
+
+    private double CanvasWidth => ((Tray.Width) * canvasScale) + 100;
+    private double CanvasHeight => ((Tray.Height) * canvasScale) + 100;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initial drawing
+            await DrawTray();
+        }
+    }
+
+    private async Task HandleTrayPropertyChange()
+    {
+        // Triggered when Tray properties change
+        await InvokeAsync(StateHasChanged);
+        await DrawTray();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Tray = await TrayService.GetTrayAsync(Id);
+        await TrayService.UpdateTrayAsync(Tray);
         CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
     }
 
@@ -115,10 +147,89 @@
         {
             await TrayService.UpdateTrayAsync(Tray);
             Snackbar.Add("Tray details updated successfully!", Severity.Success);
+            await HandleTrayPropertyChange();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error updating tray details: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DrawTray()
+    {
+        try
+        {
+            await using (var ctx = await canvas.GetContext2DAsync())
+            {
+                const int textPadding = 20;
+
+                await ctx.RestoreAsync();
+                await ctx.TranslateAsync(-textPadding, -(50 + Tray.Height * canvasScale / 2));
+                await ctx.ClearRectAsync(0, 0, CanvasWidth, CanvasHeight);
+
+                // Add title text above the rectangle
+                await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+
+                await ctx.SaveAsync();
+                await ctx.FontAsync("24px Arial");
+                await ctx.FillStyleAsync("black");
+                await ctx.TextAlignAsync(TextAlign.Center);
+                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                await ctx.FillTextAsync($"Cables bundles laying concept for tray {Tray.Name}", Tray.Width * canvasScale / 2, 30);
+                await ctx.RestoreAsync();
+
+                //Height at the left side
+                await ctx.SaveAsync();
+                await ctx.FontAsync("24px Arial");
+                await ctx.FillStyleAsync("black");
+                await ctx.TextAlignAsync(TextAlign.Center);
+                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                await ctx.TranslateAsync(textPadding, 50 + Tray.Height * canvasScale / 2);
+                await ctx.RotateAsync(Math.PI / 2);
+                await ctx.FillTextAsync($"Useful tray height: {Tray.Height - 25} mm", 0, 0);
+                await ctx.RestoreAsync();
+
+                // Draw rectangle
+                await ctx.StrokeStyleAsync("black");
+                await ctx.StrokeRectAsync(50, 50, Tray.Width * canvasScale, Tray.Height * canvasScale);
+
+                // Width at the bottom
+                await ctx.FontAsync("24px Arial");
+                await ctx.FillStyleAsync("black");
+                await ctx.TextAlignAsync(TextAlign.Center);
+                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                await ctx.FillTextAsync($"Useful tray width: {(Tray.Width)} mm", (Tray.Width * canvasScale) / 2, 50 + (Tray.Height * canvasScale) + textPadding);
+
+                await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+                double spacing = 1 * canvasScale; // Adjust spacing as needed
+
+                double leftStartX = 50 + spacing;
+                double rightStartX = 50 + Tray.Width * canvasScale - spacing;
+                double bottomStartY = 50 + Tray.Height * canvasScale - spacing;
+                int cableNumber = 1;
+
+                foreach (var cable in CablesOnTray)
+                {
+                    double radius = cable.CableType.Diameter / 2 * canvasScale;
+                    await ctx.BeginPathAsync();
+                    await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                    await ctx.ClosePathAsync();
+                    await ctx.StrokeAsync();
+                    // Draw cable number inside the circle
+                    await ctx.FontAsync("12px Arial");
+                    await ctx.FillStyleAsync("black");
+                    await ctx.TextAlignAsync(TextAlign.Center);
+                    await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                    await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+
+                    leftStartX += cable.CableType.Diameter * canvasScale + spacing;
+                    cableNumber++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during canvas drawing: {ex.Message}");
         }
     }
 }
