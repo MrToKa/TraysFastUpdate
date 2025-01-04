@@ -122,14 +122,12 @@
     {
         if (firstRender)
         {
-            // Initial drawing
             await DrawTray();
         }
     }
 
     private async Task HandleTrayPropertyChange()
     {
-        // Triggered when Tray properties change
         await InvokeAsync(StateHasChanged);
         await DrawTray();
     }
@@ -162,6 +160,7 @@
             await using (var ctx = await canvas.GetContext2DAsync())
             {
                 const int textPadding = 20;
+                const int CProfileHeight = 15;
 
                 await ctx.RestoreAsync();
                 await ctx.TranslateAsync(-textPadding, -(50 + Tray.Height * canvasScale / 2));
@@ -186,12 +185,18 @@
                 await ctx.TextBaseLineAsync(TextBaseLine.Middle);
                 await ctx.TranslateAsync(textPadding, 50 + Tray.Height * canvasScale / 2);
                 await ctx.RotateAsync(Math.PI / 2);
-                await ctx.FillTextAsync($"Useful tray height: {Tray.Height - 25} mm", 0, 0);
+                await ctx.FillTextAsync($"Useful tray height: {Tray.Height - CProfileHeight} mm", 0, 0);
                 await ctx.RestoreAsync();
 
                 // Draw rectangle
                 await ctx.StrokeStyleAsync("black");
-                await ctx.StrokeRectAsync(50, 50, Tray.Width * canvasScale, Tray.Height * canvasScale);
+                await ctx.StrokeRectAsync(50, 50, Tray.Width * canvasScale, (Tray.Height - CProfileHeight) * canvasScale);
+                //Draw C-profile
+                await ctx.StrokeStyleAsync("black");
+                await ctx.StrokeRectAsync(50, 50 + (Tray.Height - CProfileHeight) * canvasScale, Tray.Width * canvasScale, CProfileHeight * canvasScale);
+                //fill C-profile
+                await ctx.FillStyleAsync("#D3D3D3");
+                await ctx.FillRectAsync(50, 50 + (Tray.Height - CProfileHeight) * canvasScale, Tray.Width * canvasScale, CProfileHeight * canvasScale);
 
                 // Width at the bottom
                 await ctx.FontAsync("24px Arial");
@@ -205,7 +210,7 @@
 
                 double leftStartX = 50 + spacing;
                 double rightStartX = 50 + Tray.Width * canvasScale - spacing;
-                double bottomStartY = 50 + Tray.Height * canvasScale - spacing;
+                double bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
                 int cableNumber = 1;
 
                 foreach (var cable in CablesOnTray)
