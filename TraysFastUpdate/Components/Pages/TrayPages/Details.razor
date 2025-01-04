@@ -110,6 +110,8 @@
     private Tray Tray { get; set; } = new Tray();
 
     private List<Cable> CablesOnTray = new List<Cable>();
+    private List<Cable> BottomRowPowerCables = new List<Cable>();
+    private List<Cable> BottomRowControlCables = new List<Cable>();
 
     private Dictionary<string, Dictionary<string, List<Cable>>> CableBundles = new Dictionary<string, Dictionary<string, List<Cable>>>();
 
@@ -214,26 +216,108 @@
                 double leftStartX = 50 + spacing;
                 double rightStartX = 50 + Tray.Width * canvasScale - spacing;
                 double bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
-                int cableNumber = 1;
 
                 var bundles = CableBundles;
 
-                foreach (var cable in CablesOnTray)
+                foreach (var bundle in bundles)
                 {
-                    double radius = cable.CableType.Diameter / 2 * canvasScale;
-                    await ctx.BeginPathAsync();
-                    await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
-                    await ctx.ClosePathAsync();
-                    await ctx.StrokeAsync();
-                    // Draw cable number inside the circle
-                    await ctx.FontAsync("12px Arial");
-                    await ctx.FillStyleAsync("black");
-                    await ctx.TextAlignAsync(TextAlign.Center);
-                    await ctx.TextBaseLineAsync(TextBaseLine.Middle);
-                    await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+                    if (bundle.Key == "Power")
+                    {
+                        var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
 
-                    leftStartX += cable.CableType.Diameter * canvasScale + spacing;
-                    cableNumber++;
+                        foreach (var sortedBundle in sortedBundles)
+                        {
+                            (int rows, int columns) = calculateRowsAndColumns(Tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+
+                            int row = 0;
+                            int column = 0;
+
+                            var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                            foreach (var cable in sortedCables)
+                            {
+                                double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                await ctx.BeginPathAsync();
+                                await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                await ctx.ClosePathAsync();
+                                await ctx.StrokeAsync();
+                                // Draw cable number inside the circle
+                                await ctx.FontAsync("12px Arial");
+                                await ctx.FillStyleAsync("black");
+                                await ctx.TextAlignAsync(TextAlign.Center);
+                                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+                                bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
+
+                                if (row == 0)
+                                {
+                                    BottomRowPowerCables.Add(cable);
+                                }
+
+                                row++;
+                                if (row == rows)
+                                {
+                                    row = 0;
+                                    column++;
+                                    leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                                    bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                }
+                            }
+
+                            leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                            bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                        }
+                    }
+
+                    else if (bundle.Key == "Control")
+                    {
+                        var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                        foreach (var sortedBundle in sortedBundles)
+                        {
+                            (int rows, int columns) = calculateRowsAndColumns(Tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
+
+                            int row = 0;
+
+                            var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                            foreach (var cable in sortedCables)
+                            {
+                                double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                await ctx.BeginPathAsync();
+                                await ctx.ArcAsync(rightStartX - radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                await ctx.ClosePathAsync();
+                                await ctx.StrokeAsync();
+                                // Draw cable number inside the circle
+                                await ctx.FontAsync("12px Arial");
+                                await ctx.FillStyleAsync("black");
+                                await ctx.TextAlignAsync(TextAlign.Center);
+                                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                await ctx.FillTextAsync(cableNumber.ToString(), rightStartX - radius, bottomStartY - radius);
+                                bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
+
+                                if (row == 0)
+                                {
+                                    BottomRowControlCables.Add(cable);
+                                }
+
+                                row++;
+                                if (row == rows)
+                                {
+                                    row = 0;
+                                    rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                                    bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                }
+                            }
+                            rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                            bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                        }
+                    }
+                    else if (bundle.Key == "MV")
+                    {
+                    }
                 }
             }
         }
@@ -241,5 +325,31 @@
         {
             Console.WriteLine($"Error during canvas drawing: {ex.Message}");
         }
+    }
+
+    private (int, int) calculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
+    {
+        int rows = 0;
+        int columns = 0;
+        double diameter = bundle.Max(x => x.CableType.Diameter);
+
+        if (purpose == "Power")
+        {
+            rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 3);
+            columns = (int)Math.Floor((double)bundle.Count / rows);
+        }
+        else if (purpose == "Control")
+        {
+            rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 7);
+            columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
+        }
+
+        if (rows > columns)
+        {
+            rows = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+            columns = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+        }
+
+        return (rows, columns);
     }
 }
