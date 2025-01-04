@@ -111,6 +111,8 @@
 
     private List<Cable> CablesOnTray = new List<Cable>();
 
+    private Dictionary<string, Dictionary<string, List<Cable>>> CableBundles = new Dictionary<string, Dictionary<string, List<Cable>>>();
+
     private Canvas canvas = new Canvas();
 
     private int canvasScale = 3;
@@ -137,6 +139,7 @@
         Tray = await TrayService.GetTrayAsync(Id);
         await TrayService.UpdateTrayAsync(Tray);
         CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
+        CableBundles = await CableService.GetCablesBundlesOnTrayAsync(Tray);
     }
 
     private async Task HandleValidSubmit()
@@ -212,6 +215,8 @@
                 double rightStartX = 50 + Tray.Width * canvasScale - spacing;
                 double bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
                 int cableNumber = 1;
+
+                var bundles = CableBundles;
 
                 foreach (var cable in CablesOnTray)
                 {

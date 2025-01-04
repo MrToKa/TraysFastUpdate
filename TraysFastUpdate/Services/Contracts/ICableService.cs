@@ -18,5 +18,6 @@ namespace TraysFastUpdate.Services.Contracts
         Task UploadFromFileAsync(IBrowserFile file);
 
         Task<List<Cable>> GetCablesOnTrayAsync(Tray tray);
+        Task<Dictionary<string, Dictionary<string, List<Cable>>>> GetCablesBundlesOnTrayAsync(Tray tray);
     }
 }

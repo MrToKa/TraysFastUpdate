@@ -38,7 +38,6 @@ namespace TraysFastUpdate.Services
 
             await TrayWeightCalculations(tray);
         }
-
         public async Task DeleteTrayAsync(int trayId)
         {
             var tray = await _repository.All<Tray>().FirstOrDefaultAsync(t => t.Id == trayId);
@@ -49,18 +48,15 @@ namespace TraysFastUpdate.Services
             _repository.Delete(tray);
             await _repository.SaveChangesAsync();
         }
-
         public async Task<Tray> GetTrayAsync(int trayId)
         {
             var tray = await _repository.All<Tray>().FirstOrDefaultAsync(t => t.Id == trayId);
             return tray ?? throw new InvalidOperationException($"Tray with ID {trayId} not found.");
         }
-
         public async Task<List<Tray>> GetTraysAsync()
         {
             return await _repository.All<Tray>().ToListAsync();
         }
-
         public async Task UpdateTrayAsync(Tray trayId)
         {
             var trayToUpdate = await _repository.All<Tray>().FirstOrDefaultAsync(t => t.Id == trayId.Id);
@@ -79,7 +75,6 @@ namespace TraysFastUpdate.Services
 
             await TrayWeightCalculations(trayToUpdate);
         }
-
         public async Task UploadFromFileAsync(IBrowserFile file)
         {
             List<Tray> trays = new List<Tray>();
@@ -162,7 +157,6 @@ namespace TraysFastUpdate.Services
             await CalculateTrayCablesWeight(tray);
             await CalculateTrayTotalWeight(tray);
         }
-
         private async Task CalculateTraySupportsWeight(Tray tray)
         {
             double totalWeight = 0;
@@ -187,7 +181,6 @@ namespace TraysFastUpdate.Services
 
             await _repository.SaveChangesAsync();
         }
-
         private async Task CalculateTrayOwnWeight(Tray tray)
         {
             tray.TrayWeightLoadPerMeter = Math.Round((double)(tray.Weight + tray.SupportsWeightLoadPerMeter), 3);
@@ -195,7 +188,6 @@ namespace TraysFastUpdate.Services
 
             await _repository.SaveChangesAsync();
         }
-
         private async Task CalculateTrayCablesWeight(Tray tray)
         {
             double cablesWeight = 0;

@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
@@ -147,8 +148,64 @@ namespace TraysFastUpdate.Services
                 .Where(c => c.Routing.Split('/')
                     .Any(segment => string.Equals(segment, tray.Name, StringComparison.OrdinalIgnoreCase)))  // Case-insensitive comparison
                 .ToList();
-
             return filteredCables;
+        }
+
+        public async Task<Dictionary<string, Dictionary<string, List<Cable>>>> GetCablesBundlesOnTrayAsync(Tray tray)
+        {
+            Dictionary<string, Dictionary<string, List<Cable>>> result = [];
+
+            var cables = await GetCablesOnTrayAsync(tray);
+
+            foreach (var cable in cables)
+            {
+                var cableBundle = DetermenCableDiameterGroup(cable.CableType.Diameter);
+
+                if (!result.ContainsKey(cable.CableType.Purpose))
+                {
+                    result.Add(cable.CableType.Purpose, new Dictionary<string, List<Cable>>());
+                }
+                if (!result[cable.CableType.Purpose].ContainsKey(cableBundle))
+                {
+                    result[cable.CableType.Purpose].Add(cableBundle, new List<Cable>());
+                }
+                result[cable.CableType.Purpose][cableBundle].Add(cable);
+
+            }
+
+            return result;
+        }
+
+        private static string DetermenCableDiameterGroup(double diameter)
+        {
+            if (diameter <= 7)
+            {
+                return "0-7";
+            }
+            else if (diameter <= 15)
+            {
+                return "7.1-15";
+            }
+            else if (diameter <= 21)
+            {
+                return "15.1-21";
+            }
+            else if (diameter <= 30)
+            {
+                return "21.1-30";
+            }
+            else if (diameter <= 40)
+            {
+                return "30.1-40";
+            }
+            else if (diameter <= 50)
+            {
+                return "40.1-50";
+            }
+            else
+            {
+                return "50+";
+            }  
         }
     }    
 }
