@@ -60,10 +60,12 @@ namespace TraysFastUpdate.Services
                 return;
             }
             cableToUpdate.Tag = cable.Tag;
-            cableToUpdate.CableType = cable.CableType;
             cableToUpdate.FromLocation = cable.FromLocation;
             cableToUpdate.ToLocation = cable.ToLocation;
             cableToUpdate.Routing = cable.Routing;
+            cableToUpdate.CableTypeId = cable.CableTypeId;
+            cableToUpdate.CableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Id == cable.CableTypeId);
+
             await _repository.SaveChangesAsync();
         }
 

@@ -8,6 +8,7 @@
 @using TraysFastUpdate.Services.Contracts
 
 @inject ICableService CableService
+@inject ICableTypeService CableTypeService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -43,7 +44,16 @@
                      Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" CommittedItemChanges="@CommittedItemChanges" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <PropertyColumn Property="x => x.Tag" Title="Cable Tag" Hideable="false" />
-                <PropertyColumn Property="x => x.CableType.Type" Title="Cable Type" Hideable="false" />
+                <PropertyColumn Property="x => x.CableType.Type" Title="Cable Type" Hideable="false">
+                    <EditTemplate>
+                        <MudSelect T="int" Value="@context.Item.CableTypeId" ValueChanged="@(async (int newValue) => await OnCableTypeChanged(context.Item, newValue))" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var cableType in CableTypes)
+                            {
+                                <MudSelectItem T="int" Value="@cableType.Id">@cableType.Type</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </EditTemplate>
+                </PropertyColumn>
                 <PropertyColumn Property="x => x.FromLocation" Title="Cable From Location" Hideable="false" />
                 <PropertyColumn Property="x => x.ToLocation" Title="Cable To Location" Hideable="false" />
                 <PropertyColumn Property="x => x.Routing" Title="Cable Routing" Hideable="false" />
@@ -65,6 +75,7 @@
 
 @code {
     private List<Cable> Elements = new List<Cable>();
+    private List<CableType> CableTypes = new List<CableType>();
 
     private MudFileUpload<IBrowserFile> _fileUpload;
 
@@ -79,6 +90,7 @@
     private async Task ReloadDataAsync()
     {
         Elements = await CableService.GetCablesAsync();
+        CableTypes = await CableTypeService.GetCablesTypesAsync();
     }
 
     private async Task DeleteCableTypeAsync(int cableTypeId)
@@ -102,8 +114,16 @@
 
     private async Task CommittedItemChanges(Cable item)
     {
-        Snackbar.Add("Cable type was updated!", Severity.Success);
-        await CableService.UpdateCableAsync(item);
+        try
+        {
+            await CableService.UpdateCableAsync(item);
+            Snackbar.Add("Cable type was updated!", Severity.Success);
+            await ReloadDataAsync();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Error while updating cable type!", Severity.Error);
+        }
     }
 
     private async Task UploadFile(InputFileChangeEventArgs e)
@@ -123,5 +143,10 @@
         }
     }
 
+    private async Task OnCableTypeChanged(Cable item, int newValue)
+    {
+        item.CableTypeId = newValue;
+        await CommittedItemChanges(item);
+    }
 
 }
