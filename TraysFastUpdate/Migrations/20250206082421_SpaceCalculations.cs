@@ -5,19 +5,19 @@
 namespace TraysFastUpdate.Migrations
 {
     /// <inheritdoc />
-    public partial class SupportsCountAndTotalWeightAdded : Migration
+    public partial class SpaceCalculations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "SupportsCount",
+            migrationBuilder.AddColumn<double>(
+                name: "SpaceAvailable",
                 table: "Trays",
-                type: "integer",
+                type: "double precision",
                 nullable: true);
 
             migrationBuilder.AddColumn<double>(
-                name: "SupportsTotalWeight",
+                name: "SpaceOccupied",
                 table: "Trays",
                 type: "double precision",
                 nullable: true);
@@ -27,11 +27,11 @@ namespace TraysFastUpdate.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "SupportsCount",
+                name: "SpaceAvailable",
                 table: "Trays");
 
             migrationBuilder.DropColumn(
-                name: "SupportsTotalWeight",
+                name: "SpaceOccupied",
                 table: "Trays");
         }
     }

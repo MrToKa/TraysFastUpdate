@@ -98,6 +98,20 @@
 </MudPaper>
 
 <MudPaper>
+    <MudGrid Class="d-flex justify-center flex-grow-1 gap-4 pa-1 ma-1">
+        <MudItem xs="12" sm="7" Class="pa-1 ma-1" Style="@($"background: #BDBDBD;")">
+            <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Tray Space Calculations</MudText>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField @bind-Value="Tray.SpaceOccupied" For="@(() => Tray.SpaceOccupied)" Label="Space occupied by cables [mm]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.SpaceAvailable" For="@(() => Tray.SpaceAvailable)" Label="Cable tray free space [%]" ReadOnly="true" />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudPaper>
     <MudItem Class="pa-1 ma-1">
         <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black" />
     </MudItem>
@@ -234,34 +248,77 @@
 
                             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
 
-                            foreach (var cable in sortedCables)
+                            if (sortedBundle.Key == "42.1-60")
                             {
-                                double radius = cable.CableType.Diameter / 2 * canvasScale;
-                                await ctx.BeginPathAsync();
-                                await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
-                                await ctx.ClosePathAsync();
-                                await ctx.StrokeAsync();
-                                // Draw cable number inside the circle
-                                await ctx.FontAsync("12px Arial");
-                                await ctx.FillStyleAsync("black");
-                                await ctx.TextAlignAsync(TextAlign.Center);
-                                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
-                                int cableNumber = CablesOnTray.IndexOf(cable) + 1;
-                                await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
-                                bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
-
-                                if (row == 0)
+                                foreach (var cable in sortedCables)
                                 {
-                                    BottomRowPowerCables.Add(cable);
+                                    int cableIndex = sortedCables.IndexOf(cable);
+                                    if (cableIndex != 0 && cableIndex % 2 == 0)
+                                    {
+                                        bottomStartY -= ((cable.CableType.Diameter * canvasScale) / 2) * (Math.Sqrt(3) / 2) + ((cable.CableType.Diameter * canvasScale) / 2) - spacing * 2;
+                                        leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale - (cable.CableType.Diameter * canvasScale + spacing) * 1.5;
+                                        row = 1;
+                                    }
+                                    double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                    await ctx.BeginPathAsync();
+                                    await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                    await ctx.ClosePathAsync();
+                                    await ctx.StrokeAsync();
+                                    // Draw cable number inside the circle
+                                    await ctx.FontAsync("12px Arial");
+                                    await ctx.FillStyleAsync("black");
+                                    await ctx.TextAlignAsync(TextAlign.Center);
+                                    await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                    int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                    await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+                                    bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+
+                                    if (row == 0)
+                                    {
+                                        BottomRowPowerCables.Add(cable);
+                                        leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                                    }
+
+                                    if (row == 1)
+                                    {
+                                        row = 0;
+                                        leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                                        bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                    }
                                 }
 
-                                row++;
-                                if (row == rows)
+                            }
+                            else
+                            {
+                                foreach (var cable in sortedCables)
                                 {
-                                    row = 0;
-                                    column++;
-                                    leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
-                                    bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                    double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                    await ctx.BeginPathAsync();
+                                    await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                    await ctx.ClosePathAsync();
+                                    await ctx.StrokeAsync();
+                                    // Draw cable number inside the circle
+                                    await ctx.FontAsync("12px Arial");
+                                    await ctx.FillStyleAsync("black");
+                                    await ctx.TextAlignAsync(TextAlign.Center);
+                                    await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                    int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                    await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+                                    bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
+
+                                    if (row == 0)
+                                    {
+                                        BottomRowPowerCables.Add(cable);
+                                    }
+
+                                    row++;
+                                    if (row == rows)
+                                    {
+                                        row = 0;
+                                        column++;
+                                        leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                                        bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                    }
                                 }
                             }
 
@@ -317,6 +374,64 @@
                     }
                     else if (bundle.Key == "MV")
                     {
+                        var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                        foreach (var sortedBundle in sortedBundles)
+                        {
+                            (int rows, int columns) = calculateRowsAndColumns(Tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+
+                            int row = 0;
+                            int cableIndex = 2;
+                            double leftStartBottom = 0;
+                            double leftStartTop = 0;
+
+                            var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                            leftStartX = 50 + spacing + sortedCables.ElementAt(0).CableType.Diameter;
+
+                            leftStartBottom = leftStartX;
+                            leftStartTop = leftStartX + (sortedCables.ElementAt(0).CableType.Diameter / 2 + 0.5) * canvasScale;
+
+                            foreach (var cable in sortedCables)
+                            {
+                                if (cableIndex == sortedCables.IndexOf(cable))
+                                {
+                                    bottomStartY -= ((cable.CableType.Diameter * canvasScale) / 2) * (Math.Sqrt(3) / 2) + ((cable.CableType.Diameter * canvasScale) / 2) - spacing * 2;
+                                    leftStartX = leftStartTop;
+                                    row = 1;
+                                    cableIndex += 3;
+                                }
+                                double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                await ctx.BeginPathAsync();
+                                await ctx.ArcAsync(leftStartX + radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                await ctx.ClosePathAsync();
+                                await ctx.StrokeAsync();
+                                // Draw cable number inside the circle
+                                await ctx.FontAsync("12px Arial");
+                                await ctx.FillStyleAsync("black");
+                                await ctx.TextAlignAsync(TextAlign.Center);
+                                await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                await ctx.FillTextAsync(cableNumber.ToString(), leftStartX + radius, bottomStartY - radius);
+                                bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+
+                                if (row == 0)
+                                {
+                                    BottomRowPowerCables.Add(cable);
+                                    leftStartX += (cable.CableType.Diameter + 1) * canvasScale;
+                                    leftStartBottom = leftStartX;
+                                }
+
+                                if (row == 1)
+                                {
+                                    row = 0;
+                                    leftStartBottom += (cable.CableType.Diameter + 1) * canvasScale * 2;
+                                    leftStartX = leftStartBottom;
+                                    leftStartTop += (cable.CableType.Diameter + 1) * canvasScale * 4;
+                                    bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale - spacing;
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -1,5 +1,8 @@
-﻿using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Linq;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Excubo.Blazor.Canvas;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using TraysFastUpdate.Data.Repositories;
@@ -13,6 +16,8 @@ namespace TraysFastUpdate.Services
         private const double supportsWeight = 5.416;
         private const double KLDistance = 1.5;
         private const double WSLDistance = 5.5;
+        private const double CProfileHeight = 15;
+        private const double spacing = 1;
 
         private readonly ITraysFastUpdateDbRepository _repository;
         private readonly ICableService _cableService;
@@ -74,6 +79,7 @@ namespace TraysFastUpdate.Services
             await _repository.SaveChangesAsync();
 
             await TrayWeightCalculations(trayToUpdate);
+            await CalculateFreePercentages(trayToUpdate);
         }
         public async Task UploadFromFileAsync(IBrowserFile file)
         {
@@ -211,6 +217,125 @@ namespace TraysFastUpdate.Services
             tray.TotalWeightLoadPerMeter = Math.Round((double)(tray.TrayWeightLoadPerMeter + tray.CablesWeightPerMeter), 3);
             tray.TotalWeightLoad = Math.Round((double)(tray.TrayOwnWeightLoad + tray.CablesWeightLoad), 3);
             await _repository.SaveChangesAsync();
+        }
+        private async Task CalculateFreePercentages(Tray tray)
+        {    
+            var bundles = await _cableService.GetCablesBundlesOnTrayAsync(tray);
+
+            double bottomRow = 1;
+
+            foreach (var bundle in bundles) 
+            {
+                if (bundle.Key == "Power")
+                {
+                    var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                    foreach (var sortedBundle in sortedBundles)
+                    {
+                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+
+                        int row = 0;
+                        int column = 0;
+
+                        var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                        if (sortedBundle.Key == "42.1-60")
+                        {
+                            foreach (var cable in sortedCables)
+                            {
+                                int cableIndex = sortedCables.IndexOf(cable);
+                                if (cableIndex != 0 && cableIndex % 2 == 0)
+                                {
+                                    continue;
+                                }
+
+                                bottomRow += cable.CableType.Diameter;
+                                bottomRow += spacing;
+                            }
+                        }
+                        else
+                        {
+                            foreach (var cable in sortedCables)
+                            {
+                                if (row == 0)
+                                {
+                                    bottomRow += cable.CableType.Diameter;
+                                    bottomRow += spacing;
+                                }
+                                row++;
+                                if (row == rows)
+                                {
+                                    row = 0;
+                                    column++;
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else if (bundle.Key == "Control")
+                {
+                    var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                    foreach (var sortedBundle in sortedBundles)
+                    {
+                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
+
+                        int row = 0;
+                        int column = 0;
+
+                        var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                        foreach (var cable in sortedCables)
+                        {
+                            if (row == 0)
+                            {
+                                bottomRow += cable.CableType.Diameter;
+                                bottomRow += spacing;
+                            }
+                            row++;
+                            if (row == rows)
+                            {
+                                row = 0;
+                                column++;
+                            }
+                        }
+                    }
+
+                }
+                else if (bundle.Key == "MV")
+                {
+                }
+            }
+
+            tray.SpaceOccupied = bottomRow;
+            tray.SpaceAvailable = Math.Round((double)(100 - (bottomRow / tray.Width * 100)), 2);
+        }
+
+        private (int, int) calculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
+        {
+            int rows = 0;
+            int columns = 0;
+            double diameter = bundle.Max(x => x.CableType.Diameter);
+
+            if (purpose == "Power")
+            {
+                rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 3);
+                columns = (int)Math.Floor((double)bundle.Count / rows);
+            }
+            else if (purpose == "Control")
+            {
+                rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 7);
+                columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
+            }
+
+            if (rows > columns)
+            {
+                rows = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+                columns = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+            }
+
+            return (rows, columns);
         }
     }
 }

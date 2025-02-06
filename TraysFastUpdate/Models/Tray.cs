@@ -29,5 +29,7 @@ namespace TraysFastUpdate.Models
         public double? CablesWeightLoad { get; set; }
         public double? TotalWeightLoadPerMeter { get; set; }
         public double? TotalWeightLoad { get; set; }
+        public double? SpaceOccupied { get; set; }
+        public double? SpaceAvailable { get; set; }
     }
 }

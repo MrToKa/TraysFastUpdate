@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TraysFastUpdate.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class DotNetUpdate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,10 +35,20 @@ namespace TraysFastUpdate.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
+                    Purpose = table.Column<string>(type: "text", nullable: false),
                     Width = table.Column<double>(type: "double precision", nullable: false),
                     Height = table.Column<double>(type: "double precision", nullable: false),
                     Length = table.Column<double>(type: "double precision", nullable: false),
-                    Weight = table.Column<double>(type: "double precision", nullable: false)
+                    Weight = table.Column<double>(type: "double precision", nullable: false),
+                    SupportsCount = table.Column<int>(type: "integer", nullable: true),
+                    SupportsTotalWeight = table.Column<double>(type: "double precision", nullable: true),
+                    SupportsWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
+                    TrayWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
+                    TrayOwnWeightLoad = table.Column<double>(type: "double precision", nullable: true),
+                    CablesWeightPerMeter = table.Column<double>(type: "double precision", nullable: true),
+                    CablesWeightLoad = table.Column<double>(type: "double precision", nullable: true),
+                    TotalWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
+                    TotalWeightLoad = table.Column<double>(type: "double precision", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -53,9 +63,9 @@ namespace TraysFastUpdate.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Tag = table.Column<string>(type: "text", nullable: false),
                     CableTypeId = table.Column<int>(type: "integer", nullable: false),
-                    FromLocation = table.Column<string>(type: "text", nullable: false),
-                    ToLocation = table.Column<string>(type: "text", nullable: false),
-                    Routing = table.Column<string>(type: "text", nullable: false)
+                    FromLocation = table.Column<string>(type: "text", nullable: true),
+                    ToLocation = table.Column<string>(type: "text", nullable: true),
+                    Routing = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

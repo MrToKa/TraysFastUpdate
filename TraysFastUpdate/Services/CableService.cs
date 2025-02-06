@@ -194,17 +194,17 @@ namespace TraysFastUpdate.Services
             {
                 return "21.1-30";
             }
-            else if (diameter <= 40)
+            else if (diameter <= 42)
             {
-                return "30.1-40";
+                return "30.1-42";
             }
-            else if (diameter <= 50)
+            else if (diameter <= 60)
             {
-                return "40.1-50";
+                return "42.1-60";
             }
             else
             {
-                return "50+";
+                return "60+";
             }  
         }
     }    
