@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Excubo.Blazor.Canvas;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
@@ -185,12 +186,32 @@ namespace TraysFastUpdate.Services
             tray.SupportsWeightLoadPerMeter = Math.Round((totalWeight / tray.Length) * 1000, 3);
             tray.SupportsTotalWeight = Math.Round(totalWeight, 3);
 
+            var supportsCountSb = new StringBuilder();
+            supportsCountSb.Append($"({Math.Round(tray.Length / 1000, 3)} * 1000) / {distance} ≈ {Math.Round(tray.Length / 1000 / distance + 1, 3)} = {supportsCount} [pcs.]");
+            tray.ResultSupportsCount = supportsCountSb.ToString();
+
+            var supportsWeightLoadPerMeterSb = new StringBuilder();
+            supportsWeightLoadPerMeterSb.Append($"{Math.Round(totalWeight, 3)} / ({Math.Round(tray.Length, 3)} * 1000) = {tray.SupportsWeightLoadPerMeter} [kg/m]");
+            tray.ResultSupportsWeightLoadPerMeter = supportsWeightLoadPerMeterSb.ToString();
+
+            var supportsTotalWeightSb = new StringBuilder();
+            supportsTotalWeightSb.Append($"{supportsCount} * {supportsWeight} = {Math.Round(totalWeight, 3)} [kg]");
+            tray.ResultSupportsTotalWeight = supportsTotalWeightSb.ToString();
+
             await _repository.SaveChangesAsync();
         }
         private async Task CalculateTrayOwnWeight(Tray tray)
         {
             tray.TrayWeightLoadPerMeter = Math.Round((double)(tray.Weight + tray.SupportsWeightLoadPerMeter), 3);
             tray.TrayOwnWeightLoad = Math.Round((double)(tray.TrayWeightLoadPerMeter * tray.Length / 1000), 3);
+
+            var trayWeightLoadPerMeterSb = new StringBuilder();
+            trayWeightLoadPerMeterSb.AppendLine($"{Math.Round(tray.Weight, 3)} + {Math.Round((double)tray.SupportsWeightLoadPerMeter, 3)} = {Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} [kg/m]");
+            tray.ResultTrayWeightLoadPerMeter = trayWeightLoadPerMeterSb.ToString();
+
+            var trayOwnWeightLoadSb = new StringBuilder();
+            trayOwnWeightLoadSb.AppendLine($"{Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} * ({Math.Round(tray.Length, 3)} / 1000) = {Math.Round((double)tray.TrayOwnWeightLoad, 3)} [kg]");
+            tray.ResultTrayOwnWeightLoad = trayOwnWeightLoadSb.ToString();
 
             await _repository.SaveChangesAsync();
         }
