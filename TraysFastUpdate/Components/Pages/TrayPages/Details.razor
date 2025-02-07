@@ -87,7 +87,7 @@
                     <MudTextField @bind-Value="Tray.ResultSupportsWeightLoadPerMeter" For="@(() => Tray.ResultSupportsWeightLoadPerMeter)" Label="Supports weight load per meter [kg/m]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultTrayWeightLoadPerMeter" For="@(() => Tray.ResultTrayWeightLoadPerMeter)" Label="Tray weight load per meter [kg/m]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultTrayOwnWeightLoad" For="@(() => Tray.ResultTrayOwnWeightLoad)" Label="Tray total own weight [kg]" ReadOnly="true" />
-                    <MudTextField @bind-Value="Tray.ResultCablesWeightPerMeter" For="@(() => Tray.ResultCablesWeightPerMeter)" AutoGrow Label="Cables weight load per meter [kg/m]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.ResultCablesWeightPerMeter" For="@(() => Tray.ResultCablesWeightPerMeter)" AutoGrow Lines="5" Label="Cables weight load per meter [kg/m]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultCablesWeightLoad" For="@(() => Tray.ResultCablesWeightLoad)" Label="Cables total weight on the tray [kg]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultTotalWeightLoadPerMeter" For="@(() => Tray.ResultTotalWeightLoadPerMeter)" Label="Total tray weight load per meter [kg/m]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultTotalWeightLoad" For="@(() => Tray.ResultTotalWeightLoad)" Label="Total tray weight [kg]" ReadOnly="true" />
@@ -103,7 +103,7 @@
             <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Tray Space Calculations</MudText>
             <MudCard>
                 <MudCardContent>
-                    <MudTextField @bind-Value="Tray.ResultSpaceOccupied" For="@(() => Tray.ResultSpaceOccupied)" AutoGrow Label="Space occupied by cables [mm]" ReadOnly="true" />
+                    <MudTextField @bind-Value="Tray.ResultSpaceOccupied" For="@(() => Tray.ResultSpaceOccupied)" AutoGrow Lines="3" Label="Space occupied by cables [mm]" ReadOnly="true" />
                     <MudTextField @bind-Value="Tray.ResultSpaceAvailable" For="@(() => Tray.ResultSpaceAvailable)" Label="Cable tray free space [%]" ReadOnly="true" />
                 </MudCardContent>
             </MudCard>
@@ -253,7 +253,7 @@
                                 foreach (var cable in sortedCables)
                                 {
                                     int cableIndex = sortedCables.IndexOf(cable);
-                                    if (cableIndex != 0 && cableIndex % 2 == 0)
+                                    if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45)
                                     {
                                         bottomStartY -= ((cable.CableType.Diameter * canvasScale) / 2) * (Math.Sqrt(3) / 2) + ((cable.CableType.Diameter * canvasScale) / 2) - spacing * 2;
                                         leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale - (cable.CableType.Diameter * canvasScale + spacing) * 1.5;

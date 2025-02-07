@@ -181,7 +181,15 @@ namespace TraysFastUpdate.Services
                 distance = WSLDistance;
             }
 
-            supportsCount = (int)Math.Round(tray.Length / 1000 / distance + 1, MidpointRounding.AwayFromZero);
+            if (tray.Length / 1000 / distance + 1 < 0.2)
+            {
+                supportsCount = (int)Math.Floor(tray.Length / 1000 / distance + 1);
+            }
+            else
+            {
+                supportsCount = (int)Math.Ceiling(tray.Length / 1000 / distance + 1);
+            }
+
             totalWeight = supportsCount * supportsWeight;
             
             tray.SupportsCount = supportsCount;
@@ -290,7 +298,7 @@ namespace TraysFastUpdate.Services
                             foreach (var cable in sortedCables)
                             {
                                 int cableIndex = sortedCables.IndexOf(cable);
-                                if (cableIndex != 0 && cableIndex % 2 == 0)
+                                if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45)
                                 {
                                     continue;
                                 }

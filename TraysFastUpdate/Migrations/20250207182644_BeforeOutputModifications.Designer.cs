@@ -11,8 +11,8 @@ using TraysFastUpdate.Data;
 namespace TraysFastUpdate.Migrations
 {
     [DbContext(typeof(TraysFastUpdateDbContext))]
-    [Migration("20250206134847_TraySupportsStringDisplay")]
-    partial class TraySupportsStringDisplay
+    [Migration("20250207182644_BeforeOutputModifications")]
+    partial class BeforeOutputModifications
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -110,6 +110,18 @@ namespace TraysFastUpdate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ResultCablesWeightLoad")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultCablesWeightPerMeter")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultSpaceAvailable")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultSpaceOccupied")
+                        .HasColumnType("text");
+
                     b.Property<string>("ResultSupportsCount")
                         .HasColumnType("text");
 
@@ -117,6 +129,18 @@ namespace TraysFastUpdate.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ResultSupportsWeightLoadPerMeter")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTotalWeightLoad")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTotalWeightLoadPerMeter")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTrayOwnWeightLoad")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTrayWeightLoadPerMeter")
                         .HasColumnType("text");
 
                     b.Property<double?>("SpaceAvailable")

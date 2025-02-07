@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TraysFastUpdate.Migrations
 {
     /// <inheritdoc />
-    public partial class DotNetUpdate : Migration
+    public partial class BeforeOutputModifications : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -43,12 +43,25 @@ namespace TraysFastUpdate.Migrations
                     SupportsCount = table.Column<int>(type: "integer", nullable: true),
                     SupportsTotalWeight = table.Column<double>(type: "double precision", nullable: true),
                     SupportsWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
+                    ResultSupportsCount = table.Column<string>(type: "text", nullable: true),
+                    ResultSupportsTotalWeight = table.Column<string>(type: "text", nullable: true),
+                    ResultSupportsWeightLoadPerMeter = table.Column<string>(type: "text", nullable: true),
                     TrayWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
                     TrayOwnWeightLoad = table.Column<double>(type: "double precision", nullable: true),
+                    ResultTrayWeightLoadPerMeter = table.Column<string>(type: "text", nullable: true),
+                    ResultTrayOwnWeightLoad = table.Column<string>(type: "text", nullable: true),
                     CablesWeightPerMeter = table.Column<double>(type: "double precision", nullable: true),
                     CablesWeightLoad = table.Column<double>(type: "double precision", nullable: true),
+                    ResultCablesWeightPerMeter = table.Column<string>(type: "text", nullable: true),
+                    ResultCablesWeightLoad = table.Column<string>(type: "text", nullable: true),
                     TotalWeightLoadPerMeter = table.Column<double>(type: "double precision", nullable: true),
-                    TotalWeightLoad = table.Column<double>(type: "double precision", nullable: true)
+                    TotalWeightLoad = table.Column<double>(type: "double precision", nullable: true),
+                    ResultTotalWeightLoadPerMeter = table.Column<string>(type: "text", nullable: true),
+                    ResultTotalWeightLoad = table.Column<string>(type: "text", nullable: true),
+                    SpaceOccupied = table.Column<double>(type: "double precision", nullable: true),
+                    SpaceAvailable = table.Column<double>(type: "double precision", nullable: true),
+                    ResultSpaceOccupied = table.Column<string>(type: "text", nullable: true),
+                    ResultSpaceAvailable = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

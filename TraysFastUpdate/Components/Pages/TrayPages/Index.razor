@@ -51,6 +51,18 @@
                 <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" />
                 <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" />
                 <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" />
+                <TemplateColumn Title="Available Space [%]">
+                    <CellTemplate>
+                        @if (context.Item.Purpose == "MV")
+                        {
+                            <MudText>N/A</MudText>
+                        }
+                        else
+                        {
+                            <MudText>@context.Item.SpaceAvailable</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
                 <TemplateColumn Title="Actions" CellClass="d-flex justify-end" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
                         <MudTooltip Text="Delete">
