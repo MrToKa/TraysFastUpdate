@@ -38,6 +38,8 @@ namespace TraysFastUpdate.Services
                 return;
             }
 
+            tray.ResultSpaceAvailable = "N/A";
+            tray.ResultSpaceOccupied = "N/A";
 
             await _repository.AddAsync(tray);
             await _repository.SaveChangesAsync();
@@ -359,6 +361,13 @@ namespace TraysFastUpdate.Services
             tray.SpaceOccupied = bottomRow;
             tray.SpaceAvailable = Math.Round((double)(100 - (bottomRow / tray.Width * 100)), 2);
 
+            if (tray.Purpose == "MV")
+            {
+                tray.ResultSpaceOccupied = "N/A";
+                tray.ResultSpaceAvailable = "N/A";
+                return;
+            }
+
             var spaceOccupiedSb = new StringBuilder();
             for (int i = 0; i < groupedByDiameterCables.Count - 1; i++)
             {
@@ -380,12 +389,12 @@ namespace TraysFastUpdate.Services
 
             if (purpose == "Power")
             {
-                rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 3);
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 3);
                 columns = (int)Math.Floor((double)bundle.Count / rows);
             }
             else if (purpose == "Control")
             {
-                rows = Math.Min((int)Math.Floor((trayHeight - spacing) / (diameter + spacing)), 7);
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 7);
                 columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
             }
 

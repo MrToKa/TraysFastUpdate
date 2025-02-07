@@ -26,6 +26,8 @@ namespace TraysFastUpdate.Services
                 return;
             }
 
+            cable.CableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Type == cable.CableType.Type);
+
             await _repository.AddAsync(cable);
             await _repository.SaveChangesAsync();
         }
@@ -133,7 +135,7 @@ namespace TraysFastUpdate.Services
                 }
 
                 foreach (var cable in cableTypes)
-                {
+                {           
                     await this.CreateCableAsync(cable);
                 }
             }
@@ -190,13 +192,13 @@ namespace TraysFastUpdate.Services
             {
                 return "15.1-21";
             }
-            else if (diameter <= 30)
+            else if (diameter <= 27)
             {
-                return "21.1-30";
+                return "21.1-27";
             }
             else if (diameter <= 42)
             {
-                return "30.1-42";
+                return "27.1-42";
             }
             else if (diameter <= 60)
             {
