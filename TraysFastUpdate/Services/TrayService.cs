@@ -1,7 +1,11 @@
-﻿using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Linq;
+using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Excubo.Blazor.Canvas;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
@@ -13,6 +17,8 @@ namespace TraysFastUpdate.Services
         private const double supportsWeight = 5.416;
         private const double KLDistance = 1.5;
         private const double WSLDistance = 5.5;
+        private const double CProfileHeight = 15;
+        private const double spacing = 1;
 
         private readonly ITraysFastUpdateDbRepository _repository;
         private readonly ICableService _cableService;
@@ -32,6 +38,8 @@ namespace TraysFastUpdate.Services
                 return;
             }
 
+            tray.ResultSpaceAvailable = "N/A";
+            tray.ResultSpaceOccupied = "N/A";
 
             await _repository.AddAsync(tray);
             await _repository.SaveChangesAsync();
@@ -74,6 +82,7 @@ namespace TraysFastUpdate.Services
             await _repository.SaveChangesAsync();
 
             await TrayWeightCalculations(trayToUpdate);
+            await CalculateFreePercentages(trayToUpdate);
         }
         public async Task UploadFromFileAsync(IBrowserFile file)
         {
@@ -179,12 +188,32 @@ namespace TraysFastUpdate.Services
             tray.SupportsWeightLoadPerMeter = Math.Round((totalWeight / tray.Length) * 1000, 3);
             tray.SupportsTotalWeight = Math.Round(totalWeight, 3);
 
+            var supportsCountSb = new StringBuilder();
+            supportsCountSb.Append($"({Math.Round(tray.Length / 1000, 3)} * 1000) / {distance} ≈ {Math.Round(tray.Length / 1000 / distance + 1, 3)} = {supportsCount} [pcs.]");
+            tray.ResultSupportsCount = supportsCountSb.ToString();
+
+            var supportsWeightLoadPerMeterSb = new StringBuilder();
+            supportsWeightLoadPerMeterSb.Append($"{Math.Round(totalWeight, 3)} / ({Math.Round(tray.Length, 3)} * 1000) = {tray.SupportsWeightLoadPerMeter} [kg/m]");
+            tray.ResultSupportsWeightLoadPerMeter = supportsWeightLoadPerMeterSb.ToString();
+
+            var supportsTotalWeightSb = new StringBuilder();
+            supportsTotalWeightSb.Append($"{supportsCount} * {supportsWeight} = {Math.Round(totalWeight, 3)} [kg]");
+            tray.ResultSupportsTotalWeight = supportsTotalWeightSb.ToString();
+
             await _repository.SaveChangesAsync();
         }
         private async Task CalculateTrayOwnWeight(Tray tray)
         {
             tray.TrayWeightLoadPerMeter = Math.Round((double)(tray.Weight + tray.SupportsWeightLoadPerMeter), 3);
             tray.TrayOwnWeightLoad = Math.Round((double)(tray.TrayWeightLoadPerMeter * tray.Length / 1000), 3);
+
+            var trayWeightLoadPerMeterSb = new StringBuilder();
+            trayWeightLoadPerMeterSb.AppendLine($"{Math.Round(tray.Weight, 3)} + {Math.Round((double)tray.SupportsWeightLoadPerMeter, 3)} = {Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} [kg/m]");
+            tray.ResultTrayWeightLoadPerMeter = trayWeightLoadPerMeterSb.ToString();
+
+            var trayOwnWeightLoadSb = new StringBuilder();
+            trayOwnWeightLoadSb.AppendLine($"{Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} * ({Math.Round(tray.Length, 3)} / 1000) = {Math.Round((double)tray.TrayOwnWeightLoad, 3)} [kg]");
+            tray.ResultTrayOwnWeightLoad = trayOwnWeightLoadSb.ToString();
 
             await _repository.SaveChangesAsync();
         }
@@ -204,13 +233,178 @@ namespace TraysFastUpdate.Services
             tray.CablesWeightPerMeter = cablesWeightPerMeter;
             tray.CablesWeightLoad = Math.Round((double)(cablesWeightPerMeter * tray.Length / 1000), 3);
 
+            var cablesWeightPerMeterSb = new StringBuilder();
+            for (int i = 0; i < cablesOnTray.Count - 1; i++)
+            {
+                cablesWeightPerMeterSb.Append($"{cablesOnTray[i].CableType.Weight} + ");
+            }
+            cablesWeightPerMeterSb.Append($"{cablesOnTray[cablesOnTray.Count - 1].CableType.Weight} = {Math.Round(cablesWeight, 3)} [kg/m]");
+            tray.ResultCablesWeightPerMeter = cablesWeightPerMeterSb.ToString();
+
+            var cablesWeightLoadSb = new StringBuilder();
+            cablesWeightLoadSb.Append($"{Math.Round(cablesWeightPerMeter, 3)} * ({Math.Round(tray.Length, 3)} / 1000) = {Math.Round((double)tray.CablesWeightLoad, 3)} [kg]");
+            tray.ResultCablesWeightLoad = cablesWeightLoadSb.ToString();
+
             await _repository.SaveChangesAsync();
         }
         private async Task CalculateTrayTotalWeight(Tray tray)
         {
             tray.TotalWeightLoadPerMeter = Math.Round((double)(tray.TrayWeightLoadPerMeter + tray.CablesWeightPerMeter), 3);
             tray.TotalWeightLoad = Math.Round((double)(tray.TrayOwnWeightLoad + tray.CablesWeightLoad), 3);
+
+            var totalWeightLoadPerMeterSb = new StringBuilder();
+            totalWeightLoadPerMeterSb.Append($"{Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} + {Math.Round((double)tray.CablesWeightPerMeter, 3)} = {Math.Round((double)tray.TotalWeightLoadPerMeter, 3)} [kg/m]");
+            tray.ResultTotalWeightLoadPerMeter = totalWeightLoadPerMeterSb.ToString();
+
+            var totalWeightLoadSb = new StringBuilder();
+            totalWeightLoadSb.Append($"{Math.Round((double)tray.TrayOwnWeightLoad, 3)} + {Math.Round((double)tray.CablesWeightLoad, 3)} = {Math.Round((double)tray.TotalWeightLoad, 3)} [kg]");
+            tray.ResultTotalWeightLoad = totalWeightLoadSb.ToString();
+
             await _repository.SaveChangesAsync();
+        }
+        private async Task CalculateFreePercentages(Tray tray)
+        {    
+            var bundles = await _cableService.GetCablesBundlesOnTrayAsync(tray);
+
+            double bottomRow = 0;
+
+            List<Cable> cablesBottomRow = new List<Cable>();
+
+            foreach (var bundle in bundles) 
+            {
+                if (bundle.Key == "Power")
+                {
+                    var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                    foreach (var sortedBundle in sortedBundles)
+                    {
+                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+
+                        int row = 0;
+                        int column = 0;
+
+                        var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                        if (sortedBundle.Key == "42.1-60")
+                        {
+                            foreach (var cable in sortedCables)
+                            {
+                                int cableIndex = sortedCables.IndexOf(cable);
+                                if (cableIndex != 0 && cableIndex % 2 == 0)
+                                {
+                                    continue;
+                                }
+
+                                bottomRow += cable.CableType.Diameter;
+                                bottomRow += spacing;
+
+                                cablesBottomRow.Add(cable);
+                            }
+                        }
+                        else
+                        {
+                            foreach (var cable in sortedCables)
+                            {
+                                if (row == 0)
+                                {
+                                    bottomRow += cable.CableType.Diameter;
+                                    bottomRow += spacing;
+
+                                    cablesBottomRow.Add(cable);
+                                }
+                                row++;
+                                if (row == rows)
+                                {
+                                    row = 0;
+                                    column++;
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else if (bundle.Key == "Control")
+                {
+                    var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                    foreach (var sortedBundle in sortedBundles)
+                    {
+                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
+
+                        int row = 0;
+                        int column = 0;
+
+                        var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                        foreach (var cable in sortedCables)
+                        {
+                            if (row == 0)
+                            {
+                                bottomRow += cable.CableType.Diameter;
+                                bottomRow += spacing;
+
+                                cablesBottomRow.Add(cable);
+                            }
+                            row++;
+                            if (row == rows)
+                            {
+                                row = 0;
+                                column++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var groupedByDiameterCables = cablesBottomRow.GroupBy(x => x.CableType.Diameter).ToList();
+
+            tray.SpaceOccupied = bottomRow;
+            tray.SpaceAvailable = Math.Round((double)(100 - (bottomRow / tray.Width * 100)), 2);
+
+            if (tray.Purpose == "MV")
+            {
+                tray.ResultSpaceOccupied = "N/A";
+                tray.ResultSpaceAvailable = "N/A";
+                return;
+            }
+
+            var spaceOccupiedSb = new StringBuilder();
+            for (int i = 0; i < groupedByDiameterCables.Count - 1; i++)
+            {
+                spaceOccupiedSb.Append($"({groupedByDiameterCables[i].Key} * {groupedByDiameterCables[i].Count()}) + {spacing} * {groupedByDiameterCables[i].Count()} + ");
+            }
+            spaceOccupiedSb.Append($"({groupedByDiameterCables[groupedByDiameterCables.Count - 1].Key} * {groupedByDiameterCables[groupedByDiameterCables.Count - 1].Count()}) + {spacing} * {groupedByDiameterCables[groupedByDiameterCables.Count - 1].Count()} = {Math.Round(bottomRow, 3)} [mm]");
+            tray.ResultSpaceOccupied = spaceOccupiedSb.ToString();
+
+            var spaceAvailableSb = new StringBuilder();
+            spaceAvailableSb.Append($"100 - ({Math.Round(bottomRow, 3)} / {Math.Round(tray.Width, 3)} * 100) = {Math.Round((double)tray.SpaceAvailable, 2)} [%]");
+            tray.ResultSpaceAvailable = spaceAvailableSb.ToString();
+        }
+
+        private (int, int) calculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
+        {
+            int rows = 0;
+            int columns = 0;
+            double diameter = bundle.Max(x => x.CableType.Diameter);
+
+            if (purpose == "Power")
+            {
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 3);
+                columns = (int)Math.Floor((double)bundle.Count / rows);
+            }
+            else if (purpose == "Control")
+            {
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 7);
+                columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
+            }
+
+            if (rows > columns)
+            {
+                rows = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+                columns = (int)Math.Floor(Math.Ceiling(Math.Sqrt(bundle.Count)));
+            }
+
+            return (rows, columns);
         }
     }
 }

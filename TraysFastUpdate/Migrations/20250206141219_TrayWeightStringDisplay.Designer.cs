@@ -4,22 +4,22 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using TraysFastUpdate.Data.Repositories;
+using TraysFastUpdate.Data;
 
 #nullable disable
 
 namespace TraysFastUpdate.Migrations
 {
-    [DbContext(typeof(ITraysFastUpdateDbRepository))]
-    [Migration("20241225105710_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(TraysFastUpdateDbContext))]
+    [Migration("20250206141219_TrayWeightStringDisplay")]
+    partial class TrayWeightStringDisplay
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -36,11 +36,9 @@ namespace TraysFastUpdate.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("FromLocation")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Routing")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Tag")
@@ -48,7 +46,6 @@ namespace TraysFastUpdate.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ToLocation")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -93,6 +90,12 @@ namespace TraysFastUpdate.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("CablesWeightLoad")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("CablesWeightPerMeter")
+                        .HasColumnType("double precision");
+
                     b.Property<double>("Height")
                         .HasColumnType("double precision");
 
@@ -102,6 +105,52 @@ namespace TraysFastUpdate.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultSupportsCount")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultSupportsTotalWeight")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultSupportsWeightLoadPerMeter")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTrayOwnWeightLoad")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultTrayWeightLoadPerMeter")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("SpaceAvailable")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("SpaceOccupied")
+                        .HasColumnType("double precision");
+
+                    b.Property<int?>("SupportsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("SupportsTotalWeight")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("SupportsWeightLoadPerMeter")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("TotalWeightLoad")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("TotalWeightLoadPerMeter")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("TrayOwnWeightLoad")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("TrayWeightLoadPerMeter")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Type")
                         .IsRequired()

@@ -4,22 +4,22 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using TraysFastUpdate.Data.Repositories;
+using TraysFastUpdate.Data;
 
 #nullable disable
 
 namespace TraysFastUpdate.Migrations
 {
-    [DbContext(typeof(ITraysFastUpdateDbRepository))]
-    [Migration("20241226152020_AddedWeightCalcProps")]
-    partial class AddedWeightCalcProps
+    [DbContext(typeof(TraysFastUpdateDbContext))]
+    [Migration("20250206082421_SpaceCalculations")]
+    partial class SpaceCalculations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -109,6 +109,12 @@ namespace TraysFastUpdate.Migrations
                     b.Property<string>("Purpose")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<double?>("SpaceAvailable")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("SpaceOccupied")
+                        .HasColumnType("double precision");
 
                     b.Property<int?>("SupportsCount")
                         .HasColumnType("integer");
