@@ -231,19 +231,42 @@ namespace TraysFastUpdate.Services
             tray.CablesWeightPerMeter = cablesWeightPerMeter;
             tray.CablesWeightLoad = Math.Round((double)(cablesWeightPerMeter * tray.Length / 1000), 3);
 
+            var cablesWeightPerMeterSb = new StringBuilder();
+            for (int i = 0; i < cablesOnTray.Count - 1; i++)
+            {
+                cablesWeightPerMeterSb.Append($"{cablesOnTray[i].CableType.Weight} + ");
+            }
+            cablesWeightPerMeterSb.Append($"{cablesOnTray[cablesOnTray.Count - 1].CableType.Weight} = {Math.Round(cablesWeight, 3)} [kg/m]");
+            tray.ResultCablesWeightPerMeter = cablesWeightPerMeterSb.ToString();
+
+            var cablesWeightLoadSb = new StringBuilder();
+            cablesWeightLoadSb.Append($"{Math.Round(cablesWeightPerMeter, 3)} * ({Math.Round(tray.Length, 3)} / 1000) = {Math.Round((double)tray.CablesWeightLoad, 3)} [kg]");
+            tray.ResultCablesWeightLoad = cablesWeightLoadSb.ToString();
+
             await _repository.SaveChangesAsync();
         }
         private async Task CalculateTrayTotalWeight(Tray tray)
         {
             tray.TotalWeightLoadPerMeter = Math.Round((double)(tray.TrayWeightLoadPerMeter + tray.CablesWeightPerMeter), 3);
             tray.TotalWeightLoad = Math.Round((double)(tray.TrayOwnWeightLoad + tray.CablesWeightLoad), 3);
+
+            var totalWeightLoadPerMeterSb = new StringBuilder();
+            totalWeightLoadPerMeterSb.Append($"{Math.Round((double)tray.TrayWeightLoadPerMeter, 3)} + {Math.Round((double)tray.CablesWeightPerMeter, 3)} = {Math.Round((double)tray.TotalWeightLoadPerMeter, 3)} [kg/m]");
+            tray.ResultTotalWeightLoadPerMeter = totalWeightLoadPerMeterSb.ToString();
+
+            var totalWeightLoadSb = new StringBuilder();
+            totalWeightLoadSb.Append($"{Math.Round((double)tray.TrayOwnWeightLoad, 3)} + {Math.Round((double)tray.CablesWeightLoad, 3)} = {Math.Round((double)tray.TotalWeightLoad, 3)} [kg]");
+            tray.ResultTotalWeightLoad = totalWeightLoadSb.ToString();
+
             await _repository.SaveChangesAsync();
         }
         private async Task CalculateFreePercentages(Tray tray)
         {    
             var bundles = await _cableService.GetCablesBundlesOnTrayAsync(tray);
 
-            double bottomRow = 1;
+            double bottomRow = 0;
+
+            List<Cable> cablesBottomRow = new List<Cable>();
 
             foreach (var bundle in bundles) 
             {
@@ -272,6 +295,8 @@ namespace TraysFastUpdate.Services
 
                                 bottomRow += cable.CableType.Diameter;
                                 bottomRow += spacing;
+
+                                cablesBottomRow.Add(cable);
                             }
                         }
                         else
@@ -282,6 +307,8 @@ namespace TraysFastUpdate.Services
                                 {
                                     bottomRow += cable.CableType.Diameter;
                                     bottomRow += spacing;
+
+                                    cablesBottomRow.Add(cable);
                                 }
                                 row++;
                                 if (row == rows)
@@ -313,6 +340,8 @@ namespace TraysFastUpdate.Services
                             {
                                 bottomRow += cable.CableType.Diameter;
                                 bottomRow += spacing;
+
+                                cablesBottomRow.Add(cable);
                             }
                             row++;
                             if (row == rows)
@@ -322,15 +351,25 @@ namespace TraysFastUpdate.Services
                             }
                         }
                     }
-
-                }
-                else if (bundle.Key == "MV")
-                {
                 }
             }
 
+            var groupedByDiameterCables = cablesBottomRow.GroupBy(x => x.CableType.Diameter).ToList();
+
             tray.SpaceOccupied = bottomRow;
             tray.SpaceAvailable = Math.Round((double)(100 - (bottomRow / tray.Width * 100)), 2);
+
+            var spaceOccupiedSb = new StringBuilder();
+            for (int i = 0; i < groupedByDiameterCables.Count - 1; i++)
+            {
+                spaceOccupiedSb.Append($"({groupedByDiameterCables[i].Key} * {groupedByDiameterCables[i].Count()}) + {spacing} * {groupedByDiameterCables[i].Count()} + ");
+            }
+            spaceOccupiedSb.Append($"({groupedByDiameterCables[groupedByDiameterCables.Count - 1].Key} * {groupedByDiameterCables[groupedByDiameterCables.Count - 1].Count()}) + {spacing} * {groupedByDiameterCables[groupedByDiameterCables.Count - 1].Count()} = {Math.Round(bottomRow, 3)} [mm]");
+            tray.ResultSpaceOccupied = spaceOccupiedSb.ToString();
+
+            var spaceAvailableSb = new StringBuilder();
+            spaceAvailableSb.Append($"100 - ({Math.Round(bottomRow, 3)} / {Math.Round(tray.Width, 3)} * 100) = {Math.Round((double)tray.SpaceAvailable, 2)} [%]");
+            tray.ResultSpaceAvailable = spaceAvailableSb.ToString();
         }
 
         private (int, int) calculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
