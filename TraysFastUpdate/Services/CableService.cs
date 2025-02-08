@@ -2,7 +2,6 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;

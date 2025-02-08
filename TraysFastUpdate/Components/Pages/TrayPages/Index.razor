@@ -42,16 +42,16 @@
     else
     {
         <MudDataGrid T="Tray" Items="@Elements" ReadOnly="true"
-        Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick">
+                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick" >
             <Columns>
-                <PropertyColumn Property="x => x.Name" Title="Tray Name" Hideable="false" />
-                <PropertyColumn Property="x => x.Type" Title="Tray Type" Hideable="false" />
-                <PropertyColumn Property="x => x.Purpose" Title="Tray Purpose" Hideable="false" />
-                <PropertyColumn Property="x => x.Width" Title="Tray Width [mm]" Hideable="false" />
-                <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" />
-                <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" />
-                <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" />
-                <TemplateColumn Title="Available Space [%]">
+                <PropertyColumn Property="x => x.Name" Title="Tray Name" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Type" Title="Tray Type" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Purpose" Title="Tray Purpose" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Width" Title="Tray Width [mm]" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" CellClass="cursor-pointer" />
+                <TemplateColumn Title="Available Space [%]" CellStyleFunc="@_cellStyleFunc" CellClass="cursor-pointer">
                     <CellTemplate>
                         @if (context.Item.Purpose == "MV")
                         {
@@ -137,4 +137,20 @@
     {
         NavigationManager.NavigateTo($"/trays/details/{args.Item.Id}");
     }
+
+    private Func<Tray, string> _cellStyleFunc => x =>
+    {
+    string style = "";
+
+    if (x.SpaceAvailable <= 30)
+        style += "background-color:#FF0000";
+
+    else if (x.SpaceAvailable > 30 && x.SpaceAvailable <= 70)
+        style += "background-color:#8CED8C";
+
+    else if (x.SpaceAvailable >= 70)
+        style += "background-color:#F1F165";
+
+    return style;
+    };
 }
