@@ -16,9 +16,9 @@
 
 <MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
     <MudButton Href="/trays"
-    Rel="nofollow"
-    Variant="Variant.Filled"
-    Color="Color.Primary">
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
         Back to List
     </MudButton>
 </MudItem>
@@ -57,7 +57,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
-        Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
@@ -114,6 +114,14 @@
 <MudPaper>
     <MudItem Class="pa-1 ma-1">
         <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black" />
+    </MudItem>
+</MudPaper>
+
+<MudPaper>
+    <MudItem Class="d-flex justify-space-between flex-grow-1 gap-4 pa-1 ma-1">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary">Previous Tray</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary">Next Tray</MudButton>
     </MudItem>
 </MudPaper>
 
@@ -466,5 +474,17 @@
         }
 
         return (rows, columns);
+    }
+
+    private async Task ExportTrayData()
+    {
+        try
+        {
+            await TrayService.ExportToFileAsync(Tray);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error exporting tray data: {ex.Message}", Severity.Error);
+        }
     }
 }

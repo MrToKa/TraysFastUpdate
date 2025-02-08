@@ -18,16 +18,16 @@
 
 <MudItem Class="d-flex justify-center align-stretch flex-grow-1 gap-4">
     <MudButton Href="/trays/create"
-    Rel="nofollow"
-    Variant="Variant.Filled"
-    Color="Color.Primary">
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
         Add Tray
     </MudButton>
     <MudFileUpload @ref="@_fileUpload" T="IBrowserFile" OnFilesChanged="UploadFile" Accept=".xlsx">
         <ActivatorContent>
             <MudButton Variant="Variant.Filled"
-            Color="Color.Primary"
-            StartIcon="@Icons.Material.Filled.CloudUpload">
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.CloudUpload">
                 Add Trays from file
             </MudButton>
         </ActivatorContent>
@@ -51,7 +51,7 @@
                 <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" CellClass="cursor-pointer" />
-                <TemplateColumn Title="Available Space [%]" CellStyleFunc="@_cellStyleFunc" CellClass="cursor-pointer">
+                <TemplateColumn Title="Available Space [%]" CellStyleFunc="@_cellStyleFunc" CellClass="cursor-pointer" >
                     <CellTemplate>
                         @if (context.Item.Purpose == "MV")
                         {
@@ -61,8 +61,8 @@
                         {
                             <MudText>@context.Item.SpaceAvailable</MudText>
                         }
-                    </CellTemplate>
-                </TemplateColumn>
+                    </CellTemplate>                      
+                </TemplateColumn>                
                 <TemplateColumn Title="Actions" CellClass="d-flex justify-end" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
                         <MudTooltip Text="Delete">
@@ -88,6 +88,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _selectedItems = Elements.ToHashSet();
+        _filterItems = Elements.ToHashSet();
+        _filterDefinition = new FilterDefinition<Tray>
+            {
+                FilterFunction = x => _filterItems.Contains(x)
+            };
+
         await ReloadDataAsync();
     }
 
@@ -140,17 +147,75 @@
 
     private Func<Tray, string> _cellStyleFunc => x =>
     {
-    string style = "";
+        string style = "";
 
-    if (x.SpaceAvailable <= 30)
-        style += "background-color:#FF0000";
+        if (x.SpaceAvailable <= 30)
+            style += "background-color:#FF0000";
 
-    else if (x.SpaceAvailable > 30 && x.SpaceAvailable <= 70)
-        style += "background-color:#8CED8C";
+        else if (x.SpaceAvailable > 30 && x.SpaceAvailable <= 70)
+            style += "background-color:#8CED8C";
 
-    else if (x.SpaceAvailable >= 70)
-        style += "background-color:#F1F165";
+        else if (x.SpaceAvailable >= 70)
+            style += "background-color:#F1F165";
 
-    return style;
+        return style;
     };
+
+    HashSet<Tray> _selectedItems = new();
+    HashSet<Tray> _filterItems = new();
+    FilterDefinition<Tray> _filterDefinition;
+    bool _selectAll = true;
+    string _icon = Icons.Material.Outlined.FilterAlt;
+
+    bool _filterOpen = false;   
+
+    void OpenFilter()
+    {
+        _filterOpen = true;
+    }
+
+    private void SelectedChanged(bool value, Tray item)
+    {
+        if (value)
+            _selectedItems.Add(item);
+        else
+            _selectedItems.Remove(item);
+
+        if (_selectedItems.Count == Elements.Count())
+            _selectAll = true;
+        else
+            _selectAll = false;
+    }
+
+    private async Task ClearFilterAsync(FilterContext<Tray> context)
+    {
+        _selectedItems = Elements.ToHashSet();
+        _filterItems = Elements.ToHashSet();
+        _icon = Icons.Material.Outlined.FilterAlt;
+        await context.Actions.ClearFilterAsync(_filterDefinition);
+        _filterOpen = false;
+    }
+
+    private async Task ApplyFilterAsync(FilterContext<Tray> context)
+    {
+        _filterItems = _selectedItems.ToHashSet();
+        _icon = _filterItems.Count == Elements.Count() ? Icons.Material.Outlined.FilterAlt : Icons.Material.Filled.FilterAlt;
+        await context.Actions.ApplyFilterAsync(_filterDefinition);
+        _filterOpen = false;
+    }
+
+    private void SelectAll(bool value)
+    {
+        _selectAll = value;
+
+        if (value)
+        {
+            _selectedItems = Elements.ToHashSet();
+        }
+        else
+        {
+            _selectedItems.Clear();
+        }
+    }
+
 }
