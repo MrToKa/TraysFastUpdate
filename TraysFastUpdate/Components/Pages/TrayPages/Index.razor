@@ -42,7 +42,7 @@
     else
     {
         <MudDataGrid T="Tray" Items="@Elements" ReadOnly="true"
-                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick" >
+                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick" >
             <Columns>
                 <PropertyColumn Property="x => x.Name" Title="Tray Name" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Type" Title="Tray Type" Hideable="false" CellClass="cursor-pointer" />
@@ -53,7 +53,7 @@
                 <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" CellClass="cursor-pointer" />
                 <TemplateColumn Title="Available Space [%]" CellStyleFunc="@_cellStyleFunc" CellClass="cursor-pointer" >
                     <CellTemplate>
-                        @if (context.Item.Purpose == "MV")
+                        @if (context.Item.Purpose == "Type A (Pink color) for MV cables")
                         {
                             <MudText>N/A</MudText>
                         }

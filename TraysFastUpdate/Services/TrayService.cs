@@ -1,4 +1,7 @@
 ﻿using DocumentFormat.OpenXml;
+using wp = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using a = DocumentFormat.OpenXml.Drawing;
+using pic = DocumentFormat.OpenXml.Drawing.Pictures;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -9,6 +12,7 @@ using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
+using DocumentFormat.OpenXml.Linq;
 
 namespace TraysFastUpdate.Services
 {
@@ -44,7 +48,7 @@ namespace TraysFastUpdate.Services
             await _repository.AddAsync(tray);
             await _repository.SaveChangesAsync();
 
-            await TrayWeightCalculations(tray);
+            await UpdateTrayAsync(tray);
         }
         public async Task DeleteTrayAsync(int trayId)
         {
@@ -157,6 +161,215 @@ namespace TraysFastUpdate.Services
                 {
                     await CreateTrayAsync(tray);
                 }
+            }
+        }
+        public async Task<int> GetTraysCountAsync()
+        {
+            var traysCount = await _repository.All<Tray>().CountAsync();
+            return traysCount;
+        }
+        public async Task ExportToFileAsync(Tray tray)
+        {
+            string directoryPath = System.IO.Path.Combine("wwwroot", "files", $"{tray.Name}");
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            //string filePath = Path.Combine(directoryPath, $"{tray.Name}.xlsx");
+
+            //using MemoryStream memoryStream = new MemoryStream();
+            //using SpreadsheetDocument document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
+            //WorkbookPart workbookPart = document.AddWorkbookPart();
+            //workbookPart.Workbook = new Workbook();
+            //WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            //worksheetPart.Worksheet = new Worksheet(new SheetData());
+            //Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
+            //Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
+            //sheets.Append(sheet);
+            //SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+            //Row headerRow = new Row();
+            //headerRow.Append(
+            //    new Cell() { CellValue = new CellValue("Name"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Type"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Purpose"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Width"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Height"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Length"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Weight"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Count"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Total Weight"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Tray Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Tray Own Weight Load"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Cables Weight Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Cables Weight Load"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Total Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell()
+            //    {
+            //        CellValue = new CellValue("Total Weight Load"),
+            //        DataType = CellValues.String
+            //    },
+            //    new Cell() { CellValue = new CellValue("Space Occupied"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Space Available"), DataType = CellValues.String }
+            //    );
+            //sheetData.AppendChild(headerRow);
+
+            //Row dataRow = new Row();
+
+            //dataRow.Append(
+            //    new Cell() { CellValue = new CellValue(tray.Name), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Type), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Purpose), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Width.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Height.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Length.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Weight.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsCount.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsTotalWeight.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TrayWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TrayOwnWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.CablesWeightPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.CablesWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SpaceOccupied.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SpaceAvailable.ToString()), DataType = CellValues.String }
+            //    );
+
+            //sheetData.AppendChild(dataRow);
+
+            //workbookPart.Workbook.Save();
+            //document.Dispose();
+
+            //memoryStream.Position = 0;
+
+            //await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            //await memoryStream.CopyToAsync(fileStream);
+            //memoryStream.Close();
+
+            string reportType = "";
+
+            if (tray.Purpose == "Type A (Pink color) for MV cables")
+            {
+                reportType = "ReportMacroTemplate_MV.docx";
+                //reportType = "ReportMacroTemplate_Space.docx";
+            }
+            else
+            {
+                reportType = "ReportMacroTemplate_Space.docx";
+            }
+
+            string wwwrootPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            await ExportWordReportAsync(wwwrootPath, reportType, tray);
+
+        }
+        public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
+        {
+            //remove old file
+            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
+
+            string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
+            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
+
+            double distance = 0;
+            if (tray.Type.StartsWith("KL"))
+            {
+                distance = KLDistance;
+            }
+            else if (tray.Type.StartsWith("WSL"))
+            {
+                distance = WSLDistance;
+            }
+
+            // Copy template and rename it
+            File.Copy(templatePath, newFilePath, true);
+
+            var replacements = new Dictionary<string, string>
+    {
+        { "{TrayName}", tray.Name },
+        { "{TrayType}", tray.Type },
+        { "{TrayPurpose}", tray.Purpose },
+        { "{TrayHeight}", tray.Height.ToString("F0", CultureInfo.InvariantCulture) },
+        { "{TrayWidth}", tray.Width.ToString("F0", CultureInfo.InvariantCulture) },
+        { "{TrayLength}", tray.Length.ToString("F2", CultureInfo.InvariantCulture) },
+        { "{TrayWeight}", tray.Weight.ToString("F3", CultureInfo.InvariantCulture) },
+        { "{SupportsCount}", tray.ResultSupportsCount},
+        { "{Distance}", distance.ToString("F1", CultureInfo.InvariantCulture) },
+        { "{SupportWeight}", "5.416" },
+        { "{SuppTotalWeight}", tray.ResultSupportsTotalWeight},
+        { "{SuppWeightPerMeter}", tray.ResultSupportsWeightLoadPerMeter},
+        { "{TrayLoadPerMeter}", tray.ResultTrayWeightLoadPerMeter},
+        { "{TrayWeightCalcs}", tray.ResultTrayOwnWeightLoad},
+        { "{CablesWeightPerMeter}", tray.ResultCablesWeightPerMeter},
+        { "{CablesWeightCalculations}", tray.ResultCablesWeightLoad},
+        { "{TotalPerPoint}", tray.ResultTotalWeightLoadPerMeter},
+        { "{TotalCalc}", tray.ResultTotalWeightLoad},
+        { "{TrayHeightFormula}", (tray.Height - 15).ToString("F0", CultureInfo.InvariantCulture)},
+        { "{DiametersSum}", tray.ResultSpaceOccupied},
+        { "{FreeSpace}", tray.ResultSpaceAvailable},
+        { "{DocNo}", "10004084142" },
+        { "{DocType}", "TED" },
+        { "{DocPart}", "001" },
+        { "{RevNo}", "02" },
+        { "{TodayDate}", DateTime.Now.ToString("dd-MM-yyyy") } // Today's date
+    };
+
+            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(newFilePath, true))
+            {
+                var mainPart = wordDoc.MainDocumentPart;
+
+                // Replace text in the document body
+                ReplaceTextInElement(mainPart.Document.Body, replacements);
+
+                // Replace text in all footers
+                if (mainPart.FooterParts != null)
+                {
+                    foreach (var footer in mainPart.FooterParts)
+                    {
+                        ReplaceTextInElement(footer.Footer, replacements);
+                    }
+                }
+
+                wordDoc.MainDocumentPart.Document.Save();
+
+            }
+            await InsertCableTableAsync(newFilePath, tray);
+            ReplacePlaceholdersWithImages(tray.Name, tray.Type);
+        }
+        public static void ReplacePlaceholdersWithImages(string trayName, string trayType)
+        {
+            string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string wordFilePath = Path.Combine(wwwrootPath, "files", $"{trayName}", $"{trayName}.docx");
+
+            // Determine image paths based on trayType
+            string diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
+                                    trayType.StartsWith("WSL") ? "WSL Diagram.jpg" : null;
+
+            string trayPicPath = trayType.StartsWith("KL") ? "KL Tray.jpg" :
+                                 trayType.StartsWith("WSL") ? "WSL Tray.jpg" : null;
+
+            if (diagramPicPath == null || trayPicPath == null)
+            {
+                Console.WriteLine("Unsupported tray type.");
+                return;
+            }
+
+            string diagramImagePath = Path.Combine(wwwrootPath, diagramPicPath);
+            string trayImagePath = Path.Combine(wwwrootPath, trayPicPath);
+
+            // Open Word document
+            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(wordFilePath, true))
+            {
+                MainDocumentPart mainPart = wordDoc.MainDocumentPart;
+                if (mainPart == null) return;
+
+                // Replace placeholders with images
+                ReplacePlaceholderWithImage(mainPart, "{DiagramTrayPic}", diagramImagePath);
+                ReplacePlaceholderWithImage(mainPart, "{TrayPicture}", trayImagePath);
+
+                wordDoc.Save();
             }
         }
         private async Task TrayWeightCalculations(Tray tray)
@@ -369,7 +582,7 @@ namespace TraysFastUpdate.Services
             tray.SpaceOccupied = bottomRow;
             tray.SpaceAvailable = Math.Round((double)(100 - (bottomRow / tray.Width * 100)), 2);
 
-            if (tray.Purpose == "MV")
+            if (tray.Purpose == "Type A (Pink color) for MV cables")
             {
                 tray.ResultSpaceOccupied = "N/A";
                 tray.ResultSpaceAvailable = "N/A";
@@ -413,168 +626,11 @@ namespace TraysFastUpdate.Services
 
             return (rows, columns);
         }
-        public async Task ExportToFileAsync(Tray tray)
-        {
-            string directoryPath = Path.Combine("wwwroot", "files", $"{tray.Name}");
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            //string filePath = Path.Combine(directoryPath, $"{tray.Name}.xlsx");
-
-            //using MemoryStream memoryStream = new MemoryStream();
-            //using SpreadsheetDocument document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
-            //WorkbookPart workbookPart = document.AddWorkbookPart();
-            //workbookPart.Workbook = new Workbook();
-            //WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            //worksheetPart.Worksheet = new Worksheet(new SheetData());
-            //Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
-            //Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
-            //sheets.Append(sheet);
-            //SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
-            //Row headerRow = new Row();
-            //headerRow.Append(
-            //    new Cell() { CellValue = new CellValue("Name"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Type"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Purpose"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Width"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Height"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Length"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Weight"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Count"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Total Weight"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Tray Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Tray Own Weight Load"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Cables Weight Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Cables Weight Load"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Total Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell()
-            //    {
-            //        CellValue = new CellValue("Total Weight Load"),
-            //        DataType = CellValues.String
-            //    },
-            //    new Cell() { CellValue = new CellValue("Space Occupied"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Space Available"), DataType = CellValues.String }
-            //    );
-            //sheetData.AppendChild(headerRow);
-
-            //Row dataRow = new Row();
-
-            //dataRow.Append(
-            //    new Cell() { CellValue = new CellValue(tray.Name), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Type), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Purpose), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Width.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Height.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Length.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Weight.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsCount.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsTotalWeight.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TrayWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TrayOwnWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.CablesWeightPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.CablesWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SpaceOccupied.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SpaceAvailable.ToString()), DataType = CellValues.String }
-            //    );
-
-            //sheetData.AppendChild(dataRow);
-
-            //workbookPart.Workbook.Save();
-            //document.Dispose();
-
-            //memoryStream.Position = 0;
-
-            //await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            //await memoryStream.CopyToAsync(fileStream);
-            //memoryStream.Close();
-
-            string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            await ExportWordReportAsync(wwwrootPath, "ReportMacroTemplate_Space.docx", tray);
-
-        }
-        public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
-        {
-            //remove old file
-            string oldFilePath = Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
-
-            string templatePath = Path.Combine(wwwrootPath, templateFileName);
-            string newFilePath = Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
-
-            double distance = 0;
-            if (tray.Type.StartsWith("KL"))
-            {
-                distance = KLDistance;
-            }
-            else if (tray.Type.StartsWith("WSL"))
-            {
-                distance = WSLDistance;
-            }
-
-            // Copy template and rename it
-            File.Copy(templatePath, newFilePath, true);
-
-            var replacements = new Dictionary<string, string>
-    {
-        { "{TrayName}", tray.Name },
-        { "{TrayType}", tray.Type },
-        { "{TrayPurpose}", tray.Purpose },
-        { "{TrayHeight}", tray.Height.ToString("F0", CultureInfo.InvariantCulture) },
-        { "{TrayWidth}", tray.Width.ToString("F0", CultureInfo.InvariantCulture) },
-        { "{TrayLength}", tray.Length.ToString("F2", CultureInfo.InvariantCulture) },
-        { "{TrayWeight}", tray.Weight.ToString("F3", CultureInfo.InvariantCulture) },
-        { "{SupportsCount}", tray.ResultSupportsCount},
-        { "{Distance}", distance.ToString("F1", CultureInfo.InvariantCulture) },
-        { "{SupportWeight}", "5.416" },
-        { "{SuppTotalWeight}", tray.ResultSupportsTotalWeight},
-        { "{SuppWeightPerMeter}", tray.ResultSupportsWeightLoadPerMeter},
-        { "{TrayLoadPerMeter}", tray.ResultTrayWeightLoadPerMeter},
-        { "{TrayWeightCalcs}", tray.ResultTrayOwnWeightLoad},
-        { "{CablesWeightPerMeter}", tray.ResultCablesWeightPerMeter},
-        { "{CablesWeightCalculations}", tray.ResultCablesWeightLoad},
-        { "{TotalPerPoint}", tray.ResultTotalWeightLoadPerMeter},
-        { "{TotalCalc}", tray.ResultTotalWeightLoad},
-        { "{TrayHeightFormula}", (tray.Height - 15).ToString("F0", CultureInfo.InvariantCulture)},
-        { "{DiametersSum}", tray.ResultSpaceOccupied},
-        { "{FreeSpace}", tray.ResultSpaceAvailable},
-        { "{DocNo}", "10004084142" },
-        { "{DocType}", "TED" },
-        { "{DocPart}", "001" },
-        { "{RevNo}", "02" },
-        { "{TodayDate}", DateTime.Now.ToString("dd-MM-yyyy") } // Today's date
-    };
-
-            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(newFilePath, true))
-            {
-                var mainPart = wordDoc.MainDocumentPart;
-
-                // Replace text in the document body
-                ReplaceTextInElement(mainPart.Document.Body, replacements);
-
-                // Replace text in all footers
-                if (mainPart.FooterParts != null)
-                {
-                    foreach (var footer in mainPart.FooterParts)
-                    {
-                        ReplaceTextInElement(footer.Footer, replacements);
-                    }
-                }
-
-                wordDoc.MainDocumentPart.Document.Save();
-
-            }
-            await InsertCableTableAsync(newFilePath, tray);
-        }
         private void ReplaceTextInElement(OpenXmlElement element, Dictionary<string, string> replacements)
         {
             if (element == null) return;
 
-            foreach (var paragraph in element.Descendants<Paragraph>())
+            foreach (var paragraph in element.Descendants<DocumentFormat.OpenXml.Wordprocessing.Paragraph>())
             {
                 string paragraphText = string.Join("", paragraph.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>().Select(t => t.Text));
 
@@ -619,7 +675,7 @@ namespace TraysFastUpdate.Services
 
                 if (placeholderText != null)
                 {
-                    var parentParagraph = placeholderText.Ancestors<Paragraph>().FirstOrDefault();
+                    var parentParagraph = placeholderText.Ancestors<DocumentFormat.OpenXml.Wordprocessing.Paragraph>().FirstOrDefault();
                     if (parentParagraph != null)
                     {
                         // Remove the placeholder text
@@ -642,14 +698,14 @@ namespace TraysFastUpdate.Services
             DocumentFormat.OpenXml.Wordprocessing.Table table = new DocumentFormat.OpenXml.Wordprocessing.Table();
 
             // Define table properties (border, width, alignment)
-            TableProperties tblProps = new TableProperties(
+            DocumentFormat.OpenXml.Wordprocessing.TableProperties tblProps = new DocumentFormat.OpenXml.Wordprocessing.TableProperties(
                 new TableBorders(
                     new DocumentFormat.OpenXml.Wordprocessing.TopBorder() { Val = BorderValues.Single, Size = 8 },
-                    new DocumentFormat.OpenXml.Wordprocessing.BottomBorder() { Val = BorderValues.Single, Size = 8 },                                   
+                    new DocumentFormat.OpenXml.Wordprocessing.BottomBorder() { Val = BorderValues.Single, Size = 8 },
                     new DocumentFormat.OpenXml.Wordprocessing.LeftBorder() { Val = BorderValues.Single, Size = 8 },
                     new DocumentFormat.OpenXml.Wordprocessing.RightBorder() { Val = BorderValues.Single, Size = 8 },
-                    new InsideHorizontalBorder() { Val = BorderValues.Single, Size = 4 },
-                    new InsideVerticalBorder() { Val = BorderValues.Single, Size = 4 }
+                    new DocumentFormat.OpenXml.Wordprocessing.InsideHorizontalBorder() { Val = BorderValues.Single, Size = 4 },
+                    new DocumentFormat.OpenXml.Wordprocessing.InsideVerticalBorder() { Val = BorderValues.Single, Size = 4 }
                 )
             );
             table.AppendChild(tblProps);
@@ -658,10 +714,10 @@ namespace TraysFastUpdate.Services
             int[] columnWidths = { 1000, 3000, 5000, 2000, 2000 }; // Wider "Cable type" column
 
             // Add header row
-            TableRow headerRow = new TableRow();
+            DocumentFormat.OpenXml.Wordprocessing.TableRow headerRow = new DocumentFormat.OpenXml.Wordprocessing.TableRow();
             for (int i = 0; i < headers.Length; i++)
             {
-                TableCell cell = CreateTableCell(headers[i], true, columnWidths[i]); // Pass width
+                DocumentFormat.OpenXml.Wordprocessing.TableCell cell = CreateTableCell(headers[i], true, columnWidths[i]); // Pass width
                 headerRow.Append(cell);
             }
             table.Append(headerRow);
@@ -670,7 +726,7 @@ namespace TraysFastUpdate.Services
             int index = 1;
             foreach (var cable in cablesOnTray)
             {
-                TableRow row = new TableRow();
+                DocumentFormat.OpenXml.Wordprocessing.TableRow row = new DocumentFormat.OpenXml.Wordprocessing.TableRow();
 
                 row.Append(CreateTableCell(index.ToString(), false, columnWidths[0])); // Auto-incrementing No.
                 row.Append(CreateTableCell(cable.Tag, false, columnWidths[1])); // Cable name
@@ -698,10 +754,84 @@ namespace TraysFastUpdate.Services
                 new Paragraph(new DocumentFormat.OpenXml.Wordprocessing.Run(runProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(text)))
             );
         }
-        public async Task<int> GetTraysCountAsync()
+
+        private static void ReplacePlaceholderWithImage(MainDocumentPart mainPart, string placeholder, string imagePath)
         {
-            var traysCount = await _repository.All<Tray>().CountAsync();
-            return traysCount;
+            var paragraphs = mainPart.Document.Body.Elements<Paragraph>()
+                .Where(p => p.InnerText.Contains(placeholder)).ToList();
+
+            if (!File.Exists(imagePath) || !paragraphs.Any()) return;
+
+            foreach (var paragraph in paragraphs)
+            {
+                DocumentFormat.OpenXml.Wordprocessing.Run run = paragraph.Elements<DocumentFormat.OpenXml.Wordprocessing.Run>().FirstOrDefault();
+                if (run != null)
+                {
+                    run.RemoveAllChildren<DocumentFormat.OpenXml.Wordprocessing.Text>();
+                    run.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text("")); // Clear text content
+
+                    // Insert image
+                    AddImageToRun(mainPart, run, imagePath);
+                }
+            }
+        }
+        private static void AddImageToRun(MainDocumentPart mainPart, DocumentFormat.OpenXml.Wordprocessing.Run run, string imagePath)
+        {
+            ImagePart imagePart = mainPart.AddImagePart(ImagePartType.Jpeg);
+            using (FileStream stream = new FileStream(imagePath, FileMode.Open))
+            {
+                imagePart.FeedData(stream);
+            }
+
+            // Set custom width and height (in EMUs: 1 inch = 914400 EMUs)
+            long imageWidth = 0;  // Wider image (default ~5.5 inches)
+            long imageHeight = 0; // Adjusted height (~3.3 inches)
+
+            string relationshipId = mainPart.GetIdOfPart(imagePart);
+
+            if (imagePath.Contains("Diagram"))
+            {
+                imageHeight = 3991968;
+                imageWidth = 5998464;
+            }
+            else
+            {
+                imageHeight = 5802096;
+                imageWidth = 4645152;
+            }
+
+            DocumentFormat.OpenXml.Wordprocessing.Drawing drawing = new DocumentFormat.OpenXml.Wordprocessing.Drawing(
+                new wp.Inline(
+                    new wp.Extent() { Cx = imageWidth, Cy = imageHeight },  // Set new image size
+                    new wp.EffectExtent() { LeftEdge = 0L, TopEdge = 0L, RightEdge = 0L, BottomEdge = 0L },
+                    new wp.DocProperties() { Id = 1, Name = "Inserted Image" },
+                    new wp.NonVisualGraphicFrameDrawingProperties(new a.GraphicFrameLocks() { NoChangeAspect = true }),
+                    new a.Graphic(
+                        new a.GraphicData(
+                            new pic.Picture(
+                                new pic.NonVisualPictureProperties(
+                                    new pic.NonVisualDrawingProperties() { Id = 0, Name = "New Image" },
+                                    new pic.NonVisualPictureDrawingProperties()
+                                ),
+                                new pic.BlipFill(
+                                    new a.Blip() { Embed = relationshipId },
+                                    new a.Stretch(new a.FillRectangle())
+                                ),
+                                new pic.ShapeProperties(
+                                    new a.Transform2D(
+                                        new a.Offset() { X = 0L, Y = 0L },
+                                        new a.Extents() { Cx = imageWidth, Cy = imageHeight }
+                                    ),
+                                    new a.PresetGeometry(new a.AdjustValueList()) { Preset = a.ShapeTypeValues.Rectangle }
+                                )
+                            )
+                        )
+                        { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" }
+                    )
+                )
+            );
+
+            run.Append(drawing);
         }
     }
 }
