@@ -12,5 +12,6 @@ namespace TraysFastUpdate.Services.Contracts
         Task DeleteTrayAsync(int trayId);
         Task UploadFromFileAsync(IBrowserFile file);
         Task ExportToFileAsync(Tray tray);
+        Task<int> GetTraysCountAsync();
     }
 }

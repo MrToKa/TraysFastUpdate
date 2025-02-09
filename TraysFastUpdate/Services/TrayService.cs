@@ -413,7 +413,6 @@ namespace TraysFastUpdate.Services
 
             return (rows, columns);
         }
-
         public async Task ExportToFileAsync(Tray tray)
         {
             string directoryPath = Path.Combine("wwwroot", "files", $"{tray.Name}");
@@ -422,84 +421,83 @@ namespace TraysFastUpdate.Services
                 Directory.CreateDirectory(directoryPath);
             }
 
-            string filePath = Path.Combine(directoryPath, $"{tray.Name}.xlsx");
+            //string filePath = Path.Combine(directoryPath, $"{tray.Name}.xlsx");
 
-            using MemoryStream memoryStream = new MemoryStream();
-            using SpreadsheetDocument document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
-            WorkbookPart workbookPart = document.AddWorkbookPart();
-            workbookPart.Workbook = new Workbook();
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart.Worksheet = new Worksheet(new SheetData());
-            Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
-            Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
-            sheets.Append(sheet);
-            SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
-            Row headerRow = new Row();
-            headerRow.Append(
-                new Cell() { CellValue = new CellValue("Name"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Type"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Purpose"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Width"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Height"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Length"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Weight"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Supports Count"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Supports Total Weight"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Supports Weight Load Per Meter"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Tray Weight Load Per Meter"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Tray Own Weight Load"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Cables Weight Per Meter"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Cables Weight Load"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Total Weight Load Per Meter"), DataType = CellValues.String },
-                new Cell()
-                {
-                    CellValue = new CellValue("Total Weight Load"),
-                    DataType = CellValues.String
-                },
-                new Cell() { CellValue = new CellValue("Space Occupied"), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue("Space Available"), DataType = CellValues.String }
-                );
-            sheetData.AppendChild(headerRow);
+            //using MemoryStream memoryStream = new MemoryStream();
+            //using SpreadsheetDocument document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
+            //WorkbookPart workbookPart = document.AddWorkbookPart();
+            //workbookPart.Workbook = new Workbook();
+            //WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            //worksheetPart.Worksheet = new Worksheet(new SheetData());
+            //Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
+            //Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
+            //sheets.Append(sheet);
+            //SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
+            //Row headerRow = new Row();
+            //headerRow.Append(
+            //    new Cell() { CellValue = new CellValue("Name"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Type"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Purpose"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Width"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Height"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Length"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Weight"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Count"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Total Weight"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Supports Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Tray Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Tray Own Weight Load"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Cables Weight Per Meter"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Cables Weight Load"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Total Weight Load Per Meter"), DataType = CellValues.String },
+            //    new Cell()
+            //    {
+            //        CellValue = new CellValue("Total Weight Load"),
+            //        DataType = CellValues.String
+            //    },
+            //    new Cell() { CellValue = new CellValue("Space Occupied"), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue("Space Available"), DataType = CellValues.String }
+            //    );
+            //sheetData.AppendChild(headerRow);
 
-            Row dataRow = new Row();
+            //Row dataRow = new Row();
 
-            dataRow.Append(
-                new Cell() { CellValue = new CellValue(tray.Name), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Type), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Purpose), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Width.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Height.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Length.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.Weight.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.SupportsCount.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.SupportsTotalWeight.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.SupportsWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.TrayWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.TrayOwnWeightLoad.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.CablesWeightPerMeter.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.CablesWeightLoad.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.TotalWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.TotalWeightLoad.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.SpaceOccupied.ToString()), DataType = CellValues.String },
-                new Cell() { CellValue = new CellValue(tray.SpaceAvailable.ToString()), DataType = CellValues.String }
-                );
+            //dataRow.Append(
+            //    new Cell() { CellValue = new CellValue(tray.Name), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Type), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Purpose), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Width.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Height.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Length.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.Weight.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsCount.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsTotalWeight.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SupportsWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TrayWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TrayOwnWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.CablesWeightPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.CablesWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoadPerMeter.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoad.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SpaceOccupied.ToString()), DataType = CellValues.String },
+            //    new Cell() { CellValue = new CellValue(tray.SpaceAvailable.ToString()), DataType = CellValues.String }
+            //    );
 
-            sheetData.AppendChild(dataRow);
+            //sheetData.AppendChild(dataRow);
 
-            workbookPart.Workbook.Save();
-            document.Dispose();
+            //workbookPart.Workbook.Save();
+            //document.Dispose();
 
-            memoryStream.Position = 0;
+            //memoryStream.Position = 0;
 
-            await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            await memoryStream.CopyToAsync(fileStream);
-            memoryStream.Close();
+            //await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            //await memoryStream.CopyToAsync(fileStream);
+            //memoryStream.Close();
 
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             await ExportWordReportAsync(wwwrootPath, "ReportMacroTemplate_Space.docx", tray);
 
         }
-
         public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
         {
             //remove old file
@@ -572,7 +570,6 @@ namespace TraysFastUpdate.Services
             }
             await InsertCableTableAsync(newFilePath, tray);
         }
-
         private void ReplaceTextInElement(OpenXmlElement element, Dictionary<string, string> replacements)
         {
             if (element == null) return;
@@ -607,8 +604,7 @@ namespace TraysFastUpdate.Services
                 }
             }
         }
-
-        public async Task InsertCableTableAsync(string filePath, Tray tray)
+        private async Task InsertCableTableAsync(string filePath, Tray tray)
         {
             List<Cable> cablesOnTray = await _cableService.GetCablesOnTrayAsync(tray);
 
@@ -626,20 +622,21 @@ namespace TraysFastUpdate.Services
                     var parentParagraph = placeholderText.Ancestors<Paragraph>().FirstOrDefault();
                     if (parentParagraph != null)
                     {
-                        placeholderText.Text = placeholderText.Text.Replace("{CablesTable}", ""); // Remove placeholder
+                        // Remove the placeholder text
+                        placeholderText.Text = "";
 
                         // Create the table
                         DocumentFormat.OpenXml.Wordprocessing.Table table = CreateCableTable(cablesOnTray);
 
-                        // Insert table **AFTER** the placeholder paragraph
-                        body.InsertAfter(table, parentParagraph);
+                        // Replace the paragraph with the table
+                        body.ReplaceChild(table, parentParagraph);
                     }
                 }
 
                 wordDoc.MainDocumentPart.Document.Save();
             }
-        }
 
+        }
         private DocumentFormat.OpenXml.Wordprocessing.Table CreateCableTable(List<Cable> cablesOnTray)
         {
             DocumentFormat.OpenXml.Wordprocessing.Table table = new DocumentFormat.OpenXml.Wordprocessing.Table();
@@ -688,7 +685,6 @@ namespace TraysFastUpdate.Services
 
             return table;
         }
-
         private TableCell CreateTableCell(string text, bool bold, int width)
         {
             DocumentFormat.OpenXml.Wordprocessing.RunProperties runProperties = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
@@ -702,8 +698,10 @@ namespace TraysFastUpdate.Services
                 new Paragraph(new DocumentFormat.OpenXml.Wordprocessing.Run(runProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(text)))
             );
         }
-
-
-
+        public async Task<int> GetTraysCountAsync()
+        {
+            var traysCount = await _repository.All<Tray>().CountAsync();
+            return traysCount;
+        }
     }
 }

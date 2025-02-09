@@ -4,8 +4,9 @@
 @using TraysFastUpdate.Services
 @using TraysFastUpdate.Services.Contracts
 @using Excubo.Blazor.Canvas
-@inject Microsoft.JSInterop.IJSRuntime js;
 
+@inject Microsoft.JSInterop.IJSRuntime js
+@inject NavigationManager NavigationManager
 @inject ITrayService TrayService
 @inject ICableService CableService
 @inject ISnackbar Snackbar
@@ -119,15 +120,30 @@
 
 <MudPaper>
     <MudItem Class="d-flex justify-space-between flex-grow-1 gap-4 pa-1 ma-1">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary">Previous Tray</MudButton>
+        <MudButton OnClick="GoToPreviousTray"
+                   Rel="nofollow"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(Id <= 1)">
+            Previous Tray
+        </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary">Next Tray</MudButton>
+
+        <MudButton OnClick="GoToNextTray"
+                   Rel="nofollow"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(Id >= TraysCount)">
+            Next Tray
+        </MudButton>
     </MudItem>
 </MudPaper>
 
 @code {
     [Parameter]
     public int Id { get; set; }
+    [Parameter] 
+    public int TraysCount { get; set; } // Total trays count
 
     private Tray Tray { get; set; } = new Tray();
 
@@ -164,6 +180,7 @@
         await TrayService.UpdateTrayAsync(Tray);
         CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
         CableBundles = await CableService.GetCablesBundlesOnTrayAsync(Tray);
+        TraysCount = await TrayService.GetTraysCountAsync();
     }
 
     private async Task HandleValidSubmit()
@@ -481,10 +498,27 @@
         try
         {
             await TrayService.ExportToFileAsync(Tray);
+            Snackbar.Add("Tray data exported successfully!", Severity.Success);
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error exporting tray data: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoToPreviousTray()
+    {
+        if (Id > 1)
+        {
+            NavigationManager.NavigateTo($"/trays/details/{Id - 1}", forceLoad: true);
+        }
+    }
+
+    private void GoToNextTray()
+    {
+        if (Id < TraysCount)
+        {
+            NavigationManager.NavigateTo($"/trays/details/{Id + 1}", forceLoad: true);
         }
     }
 }
