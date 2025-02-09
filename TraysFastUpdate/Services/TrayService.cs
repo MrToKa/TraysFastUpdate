@@ -12,7 +12,8 @@ using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
-using DocumentFormat.OpenXml.Linq;
+using Microsoft.JSInterop;
+using Excubo.Blazor.Canvas;
 
 namespace TraysFastUpdate.Services
 {
@@ -754,7 +755,6 @@ namespace TraysFastUpdate.Services
                 new Paragraph(new DocumentFormat.OpenXml.Wordprocessing.Run(runProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(text)))
             );
         }
-
         private static void ReplacePlaceholderWithImage(MainDocumentPart mainPart, string placeholder, string imagePath)
         {
             var paragraphs = mainPart.Document.Body.Elements<Paragraph>()
@@ -832,6 +832,43 @@ namespace TraysFastUpdate.Services
             );
 
             run.Append(drawing);
+        }
+        public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName)
+        {
+            string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string directoryPath = Path.Combine("wwwroot", "images");
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            string filePath = Path.Combine(wwwrootPath, "images", $"{trayName}.jpg");
+            //remove old file
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+
+            try
+            {
+                //await canvas.ToBlobAsync(async (Blob blob) =>
+                //{
+                //    var blobText = await blob.JSObjectReference.InvokeAsync<string>("text");
+                //    var bytes = Convert.FromBase64String(blobText);
+                //    await File.WriteAllBytesAsync(filePath, bytes);
+                //},
+
+                // "image/jpeg");
+
+                var dataUrl = await canvas.ToDataURLAsync("image/jpeg", 2);
+                var base64 = dataUrl.Split(',')[1];
+                var bytes = Convert.FromBase64String(base64);
+                await File.WriteAllBytesAsync(filePath, bytes);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

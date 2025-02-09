@@ -114,7 +114,7 @@
 
 <MudPaper>
     <MudItem Class="pa-1 ma-1">
-        <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black" />
+        <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black; background-color: white;" />
     </MudItem>
 </MudPaper>
 
@@ -206,13 +206,12 @@
                 const int textPadding = 20;
                 const int CProfileHeight = 15;
 
-                await ctx.RestoreAsync();
-                await ctx.TranslateAsync(-textPadding, -(50 + Tray.Height * canvasScale / 2));
-                await ctx.ClearRectAsync(0, 0, CanvasWidth, CanvasHeight);
+                //fill C-profile
+                // await ctx.FillStyleAsync("white");
+                // await ctx.FillRectAsync(0, 0, CanvasWidth, CanvasHeight);
 
                 // Add title text above the rectangle
                 await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
-
                 await ctx.SaveAsync();
                 await ctx.FontAsync("24px Arial");
                 await ctx.FillStyleAsync("black");
@@ -248,10 +247,9 @@
                 await ctx.TextAlignAsync(TextAlign.Center);
                 await ctx.TextBaseLineAsync(TextBaseLine.Middle);
                 await ctx.FillTextAsync($"Useful tray width: {(Tray.Width)} mm", (Tray.Width * canvasScale) / 2, 50 + (Tray.Height * canvasScale) + textPadding);
-
                 await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
-                double spacing = 1 * canvasScale; // Adjust spacing as needed
 
+                double spacing = 1 * canvasScale; // Adjust spacing as needed
                 double leftStartX = 50 + spacing;
                 double rightStartX = 50 + Tray.Width * canvasScale - spacing;
                 double bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
@@ -497,6 +495,7 @@
     {
         try
         {
+            await TrayService.ExportCanvasImageAsync(canvas, Tray.Name);
             await TrayService.ExportToFileAsync(Tray);
             Snackbar.Add("Tray data exported successfully!", Severity.Success);
         }
