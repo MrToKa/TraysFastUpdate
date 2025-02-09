@@ -12,8 +12,10 @@ using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
+using System.Drawing;
+using System.Text.Json;
 using Microsoft.JSInterop;
-using Excubo.Blazor.Canvas;
+using Microsoft.AspNetCore.Components;
 
 namespace TraysFastUpdate.Services
 {
@@ -833,6 +835,7 @@ namespace TraysFastUpdate.Services
 
             run.Append(drawing);
         }
+
         public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName)
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -851,16 +854,7 @@ namespace TraysFastUpdate.Services
 
             try
             {
-                //await canvas.ToBlobAsync(async (Blob blob) =>
-                //{
-                //    var blobText = await blob.JSObjectReference.InvokeAsync<string>("text");
-                //    var bytes = Convert.FromBase64String(blobText);
-                //    await File.WriteAllBytesAsync(filePath, bytes);
-                //},
-
-                // "image/jpeg");
-
-                var dataUrl = await canvas.ToDataURLAsync("image/jpeg", 2);
+                var dataUrl = await canvas.ToDataURLAsync("image/jpeg", 0.8f);
                 var base64 = dataUrl.Split(',')[1];
                 var bytes = Convert.FromBase64String(base64);
                 await File.WriteAllBytesAsync(filePath, bytes);
@@ -872,3 +866,4 @@ namespace TraysFastUpdate.Services
         }
     }
 }
+

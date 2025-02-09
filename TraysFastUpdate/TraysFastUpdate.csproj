@@ -39,5 +39,6 @@
   <ItemGroup>
     <Folder Include="Migrations\" />
     <Folder Include="wwwroot\files\" />
+    <Folder Include="wwwroot\NewFolder\" />
   </ItemGroup>
 </Project>

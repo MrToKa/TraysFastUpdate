@@ -1,11 +1,12 @@
 ﻿@page "/trays/details/{Id:int}"
 
+@rendermode InteractiveAuto
+
 @using TraysFastUpdate.Models
 @using TraysFastUpdate.Services
 @using TraysFastUpdate.Services.Contracts
 @using Excubo.Blazor.Canvas
 
-@inject Microsoft.JSInterop.IJSRuntime js
 @inject NavigationManager NavigationManager
 @inject ITrayService TrayService
 @inject ICableService CableService
@@ -114,7 +115,7 @@
 
 <MudPaper>
     <MudItem Class="pa-1 ma-1">
-        <Canvas @ref="canvas" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black; background-color: white;" />
+        <Canvas @ref="canvas" id="canvasId" width="@CanvasWidth" height="@CanvasHeight" style="border: 1px solid black; background-color: white;" />
     </MudItem>
 </MudPaper>
 
@@ -154,6 +155,8 @@
     private Dictionary<string, Dictionary<string, List<Cable>>> CableBundles = new Dictionary<string, Dictionary<string, List<Cable>>>();
 
     private Canvas canvas = new Canvas();
+
+    private ElementReference canvasRef;
 
     private int canvasScale = 3;
 
@@ -207,8 +210,8 @@
                 const int CProfileHeight = 15;
 
                 //fill C-profile
-                // await ctx.FillStyleAsync("white");
-                // await ctx.FillRectAsync(0, 0, CanvasWidth, CanvasHeight);
+                await ctx.FillStyleAsync("white");
+                await ctx.FillRectAsync(0, 0, CanvasWidth, CanvasHeight);
 
                 // Add title text above the rectangle
                 await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
@@ -495,7 +498,7 @@
     {
         try
         {
-            await TrayService.ExportCanvasImageAsync(canvas, Tray.Name);
+            //await TrayService.ExportCanvasImageAsync(canvas, Tray.Name);
             await TrayService.ExportToFileAsync(Tray);
             Snackbar.Add("Tray data exported successfully!", Severity.Success);
         }
@@ -520,4 +523,5 @@
             NavigationManager.NavigateTo($"/trays/details/{Id + 1}", forceLoad: true);
         }
     }
+
 }
