@@ -17,8 +17,8 @@ namespace TraysFastUpdate.Data
         {
             //Home settings environment
             IConfigurationRoot configuration = new ConfigurationBuilder()
-                .AddJsonFile(@"C:\Users\TOKA\source\repos\TraysFastUpdate\TraysFastUpdate\appsettings.json")
-                //.AddJsonFile(@"C:\Users\todor.chankov\source\repos\TraysFastUpdate\TraysFastUpdate\appsettings.json")
+                //.AddJsonFile(@"C:\Users\TOKA\source\repos\TraysFastUpdate\TraysFastUpdate\appsettings.json")
+                .AddJsonFile(@"C:\Users\todor.chankov\source\repos\TraysFastUpdate\TraysFastUpdate\appsettings.json")
                 .Build();
 
             string? connectionString = configuration.GetConnectionString("DefaultConnection");

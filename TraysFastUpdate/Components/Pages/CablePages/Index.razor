@@ -133,8 +133,9 @@
             await CableService.UploadFromFileAsync(e.File);
             Snackbar.Add("Upload of cables from file succesful!", Severity.Success);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine(ex);
             Snackbar.Add("Error while uploading data from file!", Severity.Error);
         }
         finally

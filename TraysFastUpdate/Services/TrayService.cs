@@ -12,10 +12,6 @@ using System.Text;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
-using System.Drawing;
-using System.Text.Json;
-using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Components;
 
 namespace TraysFastUpdate.Services
 {
@@ -149,7 +145,7 @@ namespace TraysFastUpdate.Services
                         }
                         else if (cell.CellReference == "F" + rowNumber)
                         {
-                            tray.Length = double.Parse(value);
+                            tray.Length = double.Parse(value, CultureInfo.InvariantCulture);
                         }
                         else if (cell.CellReference == "G" + rowNumber)
                         {
@@ -257,7 +253,6 @@ namespace TraysFastUpdate.Services
             if (tray.Purpose == "Type A (Pink color) for MV cables")
             {
                 reportType = "ReportMacroTemplate_MV.docx";
-                //reportType = "ReportMacroTemplate_Space.docx";
             }
             else
             {
@@ -448,6 +443,15 @@ namespace TraysFastUpdate.Services
 
             List<Cable> cablesOnTray = await _cableService.GetCablesOnTrayAsync(tray);
 
+            if (cablesOnTray.Count == 0)
+            {
+                tray.CablesWeightPerMeter = 0;
+                tray.CablesWeightLoad = 0;
+                tray.ResultCablesWeightPerMeter = "No cables on this tray";
+                tray.ResultCablesWeightLoad = "No cables on this tray";
+                return;
+            }
+
             foreach (var cable in cablesOnTray)
             {
                 cablesWeight += cable.CableType.Weight;
@@ -473,6 +477,15 @@ namespace TraysFastUpdate.Services
         }
         private async Task CalculateTrayTotalWeight(Tray tray)
         {
+            if (tray.ResultCablesWeightPerMeter == "No cables on this tray")
+            {
+                tray.TotalWeightLoadPerMeter = tray.TrayWeightLoadPerMeter;
+                tray.TotalWeightLoad = tray.TrayOwnWeightLoad;
+                tray.ResultTotalWeightLoadPerMeter = tray.ResultTrayWeightLoadPerMeter;
+                tray.ResultTotalWeightLoad = tray.ResultTrayOwnWeightLoad;
+                return;
+            }
+
             tray.TotalWeightLoadPerMeter = Math.Round((double)(tray.TrayWeightLoadPerMeter + tray.CablesWeightPerMeter), 3);
             tray.TotalWeightLoad = Math.Round((double)(tray.TrayOwnWeightLoad + tray.CablesWeightLoad), 3);
 
@@ -488,6 +501,15 @@ namespace TraysFastUpdate.Services
         }
         private async Task CalculateFreePercentages(Tray tray)
         {
+            if (tray.ResultCablesWeightPerMeter == "No cables on this tray")
+            {
+                tray.ResultSpaceOccupied = "N/A";
+                tray.ResultSpaceAvailable = "N/A";
+                tray.SpaceOccupied = 0;
+                tray.SpaceAvailable = 100;
+                return;
+            }
+
             var bundles = await _cableService.GetCablesBundlesOnTrayAsync(tray);
 
             double bottomRow = 0;
@@ -502,7 +524,7 @@ namespace TraysFastUpdate.Services
 
                     foreach (var sortedBundle in sortedBundles)
                     {
-                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+                        (int rows, int columns) = CalculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
 
                         int row = 0;
                         int column = 0;
@@ -553,7 +575,7 @@ namespace TraysFastUpdate.Services
 
                     foreach (var sortedBundle in sortedBundles)
                     {
-                        (int rows, int columns) = calculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
+                        (int rows, int columns) = CalculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
 
                         int row = 0;
                         int column = 0;
@@ -604,7 +626,7 @@ namespace TraysFastUpdate.Services
             spaceAvailableSb.Append($"100 - ({Math.Round(bottomRow, 3)} / {Math.Round(tray.Width, 3)} * 100) = {Math.Round((double)tray.SpaceAvailable, 2)} [%]");
             tray.ResultSpaceAvailable = spaceAvailableSb.ToString();
         }
-        private (int, int) calculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
+        private (int, int) CalculateRowsAndColumns(double trayHeight, int spacing, List<Cable> bundle, string purpose)
         {
             int rows = 0;
             int columns = 0;

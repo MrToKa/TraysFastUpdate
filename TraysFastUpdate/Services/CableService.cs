@@ -25,7 +25,12 @@ namespace TraysFastUpdate.Services
                 return;
             }
 
-            cable.CableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Type == cable.CableType.Type);
+            var cableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Id == cable.CableTypeId);
+            if (cableType == null)
+            {
+                throw new InvalidOperationException($"Cable {cable.Tag} with {cable.CableTypeId} not found.");
+            }
+            cable.CableType = cableType;
 
             await _repository.AddAsync(cable);
             await _repository.SaveChangesAsync();
@@ -66,7 +71,13 @@ namespace TraysFastUpdate.Services
             cableToUpdate.ToLocation = cable.ToLocation;
             cableToUpdate.Routing = cable.Routing;
             cableToUpdate.CableTypeId = cable.CableTypeId;
-            cableToUpdate.CableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Id == cable.CableTypeId);
+
+            var cableType = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Id == cable.CableTypeId);
+            if (cableType == null)
+            {
+                throw new InvalidOperationException($"CableType with ID {cable.CableTypeId} not found.");
+            }
+            cableToUpdate.CableType = cableType;
 
             await _repository.SaveChangesAsync();
         }
@@ -115,6 +126,7 @@ namespace TraysFastUpdate.Services
                         {
                             var ctValue = await _repository.All<CableType>().FirstOrDefaultAsync(ct => ct.Type == value);
                             cable.CableType = ctValue;
+                            cable.CableTypeId = ctValue.Id;
                         }
                         else if (cell.CellReference == "C" + rowNumber)
                         {
@@ -145,10 +157,17 @@ namespace TraysFastUpdate.Services
             var cables = await _repository.All<Cable>()
                 .Include(c => c.CableType)
                 .ToListAsync();
+
             var filteredCables = cables
-                .Where(c => c.Routing.Split('/')
+                .Where(c => c.Routing != null && c.Routing.Split('/')
                     .Any(segment => string.Equals(segment, tray.Name, StringComparison.OrdinalIgnoreCase)))  // Case-insensitive comparison
                 .ToList();
+
+            //if (filteredCables.Count == 0)
+            //{
+            //    throw new InvalidOperationException($"No cables found on tray {tray.Name}.");
+            //}
+
             return filteredCables;
         }
 

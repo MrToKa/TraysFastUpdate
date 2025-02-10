@@ -18,9 +18,9 @@
 
 <MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
     <MudButton Href="/trays"
-               Rel="nofollow"
-               Variant="Variant.Filled"
-               Color="Color.Primary">
+    Rel="nofollow"
+    Variant="Variant.Filled"
+    Color="Color.Primary">
         Back to List
     </MudButton>
 </MudItem>
@@ -59,7 +59,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
-                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+        Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
@@ -122,19 +122,19 @@
 <MudPaper>
     <MudItem Class="d-flex justify-space-between flex-grow-1 gap-4 pa-1 ma-1">
         <MudButton OnClick="GoToPreviousTray"
-                   Rel="nofollow"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="@(Id <= 1)">
+        Rel="nofollow"
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Disabled="@(Id <= 1)">
             Previous Tray
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
 
         <MudButton OnClick="GoToNextTray"
-                   Rel="nofollow"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="@(Id >= TraysCount)">
+        Rel="nofollow"
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Disabled="@(Id >= TraysCount)">
             Next Tray
         </MudButton>
     </MudItem>
@@ -202,6 +202,7 @@
 
     private async Task DrawTray()
     {
+        await Task.Delay(100);
         try
         {
             await using (var ctx = await canvas.GetContext2DAsync())
@@ -413,7 +414,7 @@
 
                             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
 
-                            leftStartX = 50 + spacing + sortedCables.ElementAt(0).CableType.Diameter;
+                            leftStartX = 50 + spacing; // + sortedCables.ElementAt(0).CableType.Diameter;
 
                             leftStartBottom = leftStartX;
                             leftStartTop = leftStartX + (sortedCables.ElementAt(0).CableType.Diameter / 2 + 0.5) * canvasScale;
