@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
+using System.Drawing;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
+using MudBlazor;
 
 namespace TraysFastUpdate.Services
 {
@@ -169,7 +171,7 @@ namespace TraysFastUpdate.Services
         }
         public async Task ExportToFileAsync(Tray tray)
         {
-            string directoryPath = System.IO.Path.Combine("wwwroot", "files", $"{tray.Name}");
+            string directoryPath = Path.Combine("wwwroot", "files");
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
@@ -266,10 +268,10 @@ namespace TraysFastUpdate.Services
         public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
         {
             //remove old file
-            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
+            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {tray.Name}.docx");
 
             string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
-            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"{tray.Name}", $"{tray.Name}.docx");
+            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {tray.Name}.docx");
 
             double distance = 0;
             if (tray.Type.StartsWith("KL"))
@@ -284,6 +286,12 @@ namespace TraysFastUpdate.Services
             // Copy template and rename it
             File.Copy(templatePath, newFilePath, true);
 
+            var groundingCableNote = "";
+            if (tray.Purpose == "Type B (Green color) for LV cables" || tray.Purpose == "Type BC (Teal color) for LV and Instrumentation and  Control cables, divided by separator")
+            {
+                groundingCableNote = "\r\n \tNote: Bare grounding copper cable with cross-section of 95 [mm²] with weight of 1.05 [kg/m] is included in the calculations. The cable itself will be mounted on the outside of the board of the tray and it is not included in the free space calculations.";
+            }
+
             var replacements = new Dictionary<string, string>
     {
         { "{TrayName}", tray.Name },
@@ -296,6 +304,7 @@ namespace TraysFastUpdate.Services
         { "{SupportsCount}", tray.ResultSupportsCount},
         { "{Distance}", distance.ToString("F1", CultureInfo.InvariantCulture) },
         { "{SupportWeight}", "5.416" },
+        { "{GroundingCableNote}", groundingCableNote },
         { "{SuppTotalWeight}", tray.ResultSupportsTotalWeight},
         { "{SuppWeightPerMeter}", tray.ResultSupportsWeightLoadPerMeter},
         { "{TrayLoadPerMeter}", tray.ResultTrayWeightLoadPerMeter},
@@ -339,14 +348,14 @@ namespace TraysFastUpdate.Services
         public static void ReplacePlaceholdersWithImages(string trayName, string trayType)
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string wordFilePath = Path.Combine(wwwrootPath, "files", $"{trayName}", $"{trayName}.docx");
+            string wordFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {trayName}.docx");
 
             // Determine image paths based on trayType
             string diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
                                     trayType.StartsWith("WSL") ? "WSL Diagram.jpg" : null;
 
-            string trayPicPath = trayType.StartsWith("KL") ? "KL Tray.jpg" :
-                                 trayType.StartsWith("WSL") ? "WSL Tray.jpg" : null;
+            string trayPicPath = trayType.StartsWith("KL") ? "KL TrayPicture.jpg" :
+                                 trayType.StartsWith("WSL") ? "WSL TrayPicture.jpg" : null;
 
             if (diagramPicPath == null || trayPicPath == null)
             {
@@ -356,6 +365,7 @@ namespace TraysFastUpdate.Services
 
             string diagramImagePath = Path.Combine(wwwrootPath, diagramPicPath);
             string trayImagePath = Path.Combine(wwwrootPath, trayPicPath);
+            string fillPicture = Path.Combine(wwwrootPath, "images", $"{trayName}.jpg");
 
             // Open Word document
             using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(wordFilePath, true))
@@ -366,6 +376,7 @@ namespace TraysFastUpdate.Services
                 // Replace placeholders with images
                 ReplacePlaceholderWithImage(mainPart, "{DiagramTrayPic}", diagramImagePath);
                 ReplacePlaceholderWithImage(mainPart, "{TrayPicture}", trayImagePath);
+                ReplacePlaceholderWithImage(mainPart, "{FillPicture}", fillPicture);
 
                 wordDoc.Save();
             }
@@ -450,6 +461,20 @@ namespace TraysFastUpdate.Services
                 tray.ResultCablesWeightPerMeter = "No cables on this tray";
                 tray.ResultCablesWeightLoad = "No cables on this tray";
                 return;
+            }
+
+            if (tray.Purpose == "Type B (Green color) for LV cables" || tray.Purpose == "Type BC (Teal color) for LV and Instrumentation and  Control cables, divided by separator")
+            {
+                Cable groundingCable = new Cable
+                {
+                    CableType = new CableType
+                    {
+                        Diameter = 95,
+                        Weight = 1.05
+                    }
+                };
+
+                cablesOnTray.Add(groundingCable);
             }
 
             foreach (var cable in cablesOnTray)
@@ -813,15 +838,41 @@ namespace TraysFastUpdate.Services
 
             string relationshipId = mainPart.GetIdOfPart(imagePart);
 
+            long maxWidth = 6740000;  // Available width in EMUs
+            long maxHeight = 8075981; // Available height in EMUs
+
+            // Predefined sizes for specific images
             if (imagePath.Contains("Diagram"))
             {
                 imageHeight = 3991968;
                 imageWidth = 5998464;
             }
-            else
+            else if (imagePath.Contains("TrayPicture"))
             {
                 imageHeight = 5802096;
                 imageWidth = 4645152;
+            }
+            else
+            {
+                // Read image dimensions dynamically
+                if (File.Exists(imagePath))
+                {
+                    using (Image img = Image.FromFile(imagePath))
+                    {
+                        // Convert pixels to EMUs (1 pixel = 9525 EMUs)
+                        long originalWidth = img.Width * 9525;
+                        long originalHeight = img.Height * 9525;
+
+                        // Calculate scaling factor to maintain aspect ratio
+                        double widthRatio = (double)maxWidth / originalWidth;
+                        double heightRatio = (double)maxHeight / originalHeight;
+                        double scaleFactor = Math.Min(widthRatio, heightRatio);
+
+                        // Apply scaling
+                        imageWidth = (long)(originalWidth * scaleFactor);
+                        imageHeight = (long)(originalHeight * scaleFactor);
+                    }
+                }
             }
 
             DocumentFormat.OpenXml.Wordprocessing.Drawing drawing = new DocumentFormat.OpenXml.Wordprocessing.Drawing(
@@ -913,7 +964,7 @@ namespace TraysFastUpdate.Services
             Row headerRow = new Row() { RowIndex = 1 };
             sheetData.Append(headerRow);
 
-            string[] headers = { "Name", "Type", "Purpose", "Width [mm]", "Height [mm]", "Length [mm]", "Available space [%]" };
+            string[] headers = { "Name", "Type", "Purpose", "Width [mm]", "Height [mm]", "Length [mm]", "Cables on tray [pcs.]", "Available space [%]" };
             for (int i = 0; i < headers.Length; i++)
             {
                 Cell headerCell = new Cell() { CellReference = ((char)('A' + i)).ToString() + "1" };
@@ -924,6 +975,8 @@ namespace TraysFastUpdate.Services
 
             for (int i = 0; i < trays.Count; i++)
             {
+                int cablesCount = (await _cableService.GetCablesOnTrayAsync(trays[i])).Count;
+
                 Row row = new Row() { RowIndex = (uint)(i + 2) }; // Start from row 2
                 sheetData.Append(row);
 
@@ -957,8 +1010,13 @@ namespace TraysFastUpdate.Services
                 cell.DataType = new EnumValue<CellValues>(CellValues.Number);
                 row.Append(cell);
 
-
                 cell = new Cell() { CellReference = "G" + (i + 2) };
+                cell.CellValue = new CellValue(cablesCount);
+                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                row.Append(cell);
+
+
+                cell = new Cell() { CellReference = "H" + (i + 2) };
                 if (trays[i].Purpose == "Type A (Pink color) for MV cables")
                 {
                     cell.CellValue = new CellValue("N/A");
@@ -977,7 +1035,7 @@ namespace TraysFastUpdate.Services
                 Id = 1,
                 DisplayName = "Trays",
                 Name = "Trays",
-                Reference = "A1:G" + (trays.Count + 1) // Covers header + all data rows
+                Reference = "A1:H" + (trays.Count + 1) // Covers header + all data rows
             };
 
             AutoFilter autoFilter = new AutoFilter() { Reference = "A1:G" + (trays.Count + 1) };
@@ -989,6 +1047,7 @@ namespace TraysFastUpdate.Services
             tableColumns.Append(new TableColumn() { Id = 4, Name = "Width [mm]" });
             tableColumns.Append(new TableColumn() { Id = 5, Name = "Height [mm]" });
             tableColumns.Append(new TableColumn() { Id = 6, Name = "Length [mm]" });
+            tableColumns.Append(new TableColumn() { Id = 7, Name = "Cables on tray [pcs.]" });
             tableColumns.Append(new TableColumn() { Id = 8, Name = "Available space [%]" });
 
             TableStyleInfo tableStyleInfo = new TableStyleInfo()
