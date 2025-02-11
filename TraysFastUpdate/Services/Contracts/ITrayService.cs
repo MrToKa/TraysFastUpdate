@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
+﻿using Microsoft.AspNetCore.Components.Forms;
 using TraysFastUpdate.Models;
 
 namespace TraysFastUpdate.Services.Contracts
@@ -15,6 +13,7 @@ namespace TraysFastUpdate.Services.Contracts
         Task UploadFromFileAsync(IBrowserFile file);
         Task ExportToFileAsync(Tray tray);
         Task<int> GetTraysCountAsync();        
-        Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName);    
+        Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName);
+        Task ExportTrayTableEntriesAsync();
     }
 }

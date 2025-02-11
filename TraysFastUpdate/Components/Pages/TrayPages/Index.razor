@@ -18,20 +18,23 @@
 
 <MudItem Class="d-flex justify-center align-stretch flex-grow-1 gap-4">
     <MudButton Href="/trays/create"
-               Rel="nofollow"
-               Variant="Variant.Filled"
-               Color="Color.Primary">
+    Rel="nofollow"
+    Variant="Variant.Filled"
+    Color="Color.Primary">
         Add Tray
     </MudButton>
     <MudFileUpload @ref="@_fileUpload" T="IBrowserFile" OnFilesChanged="UploadFile" Accept=".xlsx">
         <ActivatorContent>
             <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.CloudUpload">
+            Color="Color.Primary"
+            StartIcon="@Icons.Material.Filled.CloudUpload">
                 Add Trays from file
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
+    <MudItem>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SimCardDownload" DropShadow="false" OnClick="@(() => ExportTableAsync())">Export Full Report</MudButton>
+    </MudItem>
 </MudItem>
 
 <MudPaper Elevation="0" Class="pa-1 ma-2" Style="@($"background: #BDBDBD;")">
@@ -42,7 +45,7 @@
     else
     {
         <MudDataGrid T="Tray" Items="@Elements" ReadOnly="true"
-                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick" >
+        Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive" Virtualize="true" FixedHeader="true" Hover="true" RowClick="OnRowClick" >
             <Columns>
                 <PropertyColumn Property="x => x.Name" Title="Tray Name" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Type" Title="Tray Type" Hideable="false" CellClass="cursor-pointer" />
@@ -80,6 +83,9 @@
 
 @code {
     private List<Tray> Elements = new List<Tray>();
+
+    private MudDataGrid<Tray> dataGrid = new MudDataGrid<Tray>();
+    private IEnumerable<Tray> FilteredItems { get; set; } = new List<Tray>();
 
     private MudFileUpload<IBrowserFile> _fileUpload;
 
@@ -218,4 +224,16 @@
         }
     }
 
+    private async Task ExportTableAsync()
+    {
+        try
+        {
+            await TrayService.ExportTrayTableEntriesAsync();
+            Snackbar.Add("Table was exported successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
 }

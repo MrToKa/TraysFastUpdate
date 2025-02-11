@@ -857,7 +857,6 @@ namespace TraysFastUpdate.Services
 
             run.Append(drawing);
         }
-
         public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName)
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -885,6 +884,134 @@ namespace TraysFastUpdate.Services
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+        public async Task ExportTrayTableEntriesAsync() 
+        {
+            string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            //Remove the old file
+            if (File.Exists(Path.Combine(wwwrootPath, "Trays.xlsx")))
+            {
+                File.Delete(Path.Combine(wwwrootPath, "Trays.xlsx"));
+            }
+
+            SpreadsheetDocument document = SpreadsheetDocument.Create(Path.Combine(wwwrootPath, "Trays.xlsx"), SpreadsheetDocumentType.Workbook);
+
+            WorkbookPart workbookPart = document.AddWorkbookPart();
+            workbookPart.Workbook = new Workbook();
+
+            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+            Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
+            Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
+            sheets.Append(sheet);
+
+            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>() ?? worksheetPart.Worksheet.AppendChild(new SheetData());
+
+            List<Tray> trays = await _repository.All<Tray>().ToListAsync();
+
+            Row headerRow = new Row() { RowIndex = 1 };
+            sheetData.Append(headerRow);
+
+            string[] headers = { "Name", "Type", "Purpose", "Width [mm]", "Height [mm]", "Length [mm]", "Available space [%]" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                Cell headerCell = new Cell() { CellReference = ((char)('A' + i)).ToString() + "1" };
+                headerCell.CellValue = new CellValue(headers[i]);
+                headerCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                headerRow.Append(headerCell);
+            }
+
+            for (int i = 0; i < trays.Count; i++)
+            {
+                Row row = new Row() { RowIndex = (uint)(i + 2) }; // Start from row 2
+                sheetData.Append(row);
+
+                Cell cell = new Cell() { CellReference = "A" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Name);
+                cell.DataType = new EnumValue<CellValues>(CellValues.String);
+                row.Append(cell);
+
+                cell = new Cell() { CellReference = "B" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Type);
+                cell.DataType = new EnumValue<CellValues>(CellValues.String);
+                row.Append(cell);
+
+                cell = new Cell() { CellReference = "C" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Purpose);
+                cell.DataType = new EnumValue<CellValues>(CellValues.String);
+                row.Append(cell);
+
+                cell = new Cell() { CellReference = "D" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Width.ToString());
+                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                row.Append(cell);
+
+                cell = new Cell() { CellReference = "E" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Height.ToString());
+                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                row.Append(cell);
+
+                cell = new Cell() { CellReference = "F" + (i + 2) };
+                cell.CellValue = new CellValue(trays[index: i].Length.ToString("F3"));
+                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                row.Append(cell);
+
+
+                cell = new Cell() { CellReference = "G" + (i + 2) };
+                if (trays[i].Purpose == "Type A (Pink color) for MV cables")
+                {
+                    cell.CellValue = new CellValue("N/A");
+                }
+                else
+                {
+                    cell.CellValue = new CellValue(trays[index: i].SpaceAvailable?.ToString("F2"));
+                }                
+                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                row.Append(cell);
+            }
+
+            TableDefinitionPart tableDefinitionPart = worksheetPart.AddNewPart<TableDefinitionPart>();
+            DocumentFormat.OpenXml.Spreadsheet.Table table = new DocumentFormat.OpenXml.Spreadsheet.Table()
+            {
+                Id = 1,
+                DisplayName = "Trays",
+                Name = "Trays",
+                Reference = "A1:G" + (trays.Count + 1) // Covers header + all data rows
+            };
+
+            AutoFilter autoFilter = new AutoFilter() { Reference = "A1:G" + (trays.Count + 1) };
+
+            TableColumns tableColumns = new TableColumns() { Count = (uint)headers.Length };
+            tableColumns.Append(new TableColumn() { Id = 1, Name = "Name" });
+            tableColumns.Append(new TableColumn() { Id = 2, Name = "Type" });
+            tableColumns.Append(new TableColumn() { Id = 3, Name = "Purpose" });
+            tableColumns.Append(new TableColumn() { Id = 4, Name = "Width [mm]" });
+            tableColumns.Append(new TableColumn() { Id = 5, Name = "Height [mm]" });
+            tableColumns.Append(new TableColumn() { Id = 6, Name = "Length [mm]" });
+            tableColumns.Append(new TableColumn() { Id = 8, Name = "Available space [%]" });
+
+            TableStyleInfo tableStyleInfo = new TableStyleInfo()
+            {
+                Name = "TableStyleLight8", // Built-in Excel style
+                ShowFirstColumn = false,
+                ShowLastColumn = false,
+                ShowRowStripes = true,
+                ShowColumnStripes = false
+            };
+
+            table.Append(autoFilter);
+            table.Append(tableColumns);
+            table.Append(tableStyleInfo);
+
+            tableDefinitionPart.Table = table;
+            tableDefinitionPart.Table.Save();
+
+            TableParts tableParts = worksheetPart.Worksheet.GetFirstChild<TableParts>() ?? worksheetPart.Worksheet.AppendChild(new TableParts());
+            tableParts.Append(new TablePart() { Id = worksheetPart.GetIdOfPart(tableDefinitionPart) });
+
+            workbookPart.Workbook.Save();
+            document.Dispose();
         }
     }
 }

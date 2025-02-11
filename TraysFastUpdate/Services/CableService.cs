@@ -19,9 +19,10 @@ namespace TraysFastUpdate.Services
 
         public async Task CreateCableAsync(Cable cable)
         {
-            bool cableExists = await _repository.All<Cable>().AnyAsync(c => c.Tag == cable.Tag && c.CableType == cable.CableType);
+            bool cableExists = await _repository.All<Cable>().AnyAsync(c => c.Tag == cable.Tag && c.CableType == cable.CableType && c.FromLocation == cable.FromLocation && cable.ToLocation == cable.ToLocation);
             if (cableExists)
             {
+                await UpdateCableAsync(cable);
                 return;
             }
 
