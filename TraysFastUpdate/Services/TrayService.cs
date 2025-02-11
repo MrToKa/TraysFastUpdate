@@ -967,7 +967,7 @@ namespace TraysFastUpdate.Services
                 {
                     cell.CellValue = new CellValue(trays[index: i].SpaceAvailable?.ToString("F2"));
                 }                
-                cell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                cell.DataType = new EnumValue<CellValues>(CellValues.String);
                 row.Append(cell);
             }
 
