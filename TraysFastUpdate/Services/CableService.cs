@@ -199,13 +199,13 @@ namespace TraysFastUpdate.Services
 
         private static string DetermenCableDiameterGroup(double diameter)
         {
-            if (diameter <= 7)
+            if (diameter <= 8)
             {
-                return "0-7";
+                return "0-8";
             }
             else if (diameter <= 15)
             {
-                return "7.1-15";
+                return "8.1-15";
             }
             else if (diameter <= 21)
             {

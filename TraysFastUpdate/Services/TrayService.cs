@@ -84,10 +84,10 @@ namespace TraysFastUpdate.Services
             trayToUpdate.Height = trayId.Height;
             trayToUpdate.Length = trayId.Length;
             trayToUpdate.Weight = trayId.Weight;
-            await _repository.SaveChangesAsync();
 
             await TrayWeightCalculations(trayToUpdate);
             await CalculateFreePercentages(trayToUpdate);
+            await _repository.SaveChangesAsync();
         }
         public async Task UploadFromFileAsync(IBrowserFile file)
         {
@@ -268,10 +268,10 @@ namespace TraysFastUpdate.Services
         public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
         {
             //remove old file
-            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {tray.Name}.docx");
+            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {tray.Name}.docx");
 
             string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
-            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {tray.Name}.docx");
+            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {tray.Name}.docx");
 
             double distance = 0;
             if (tray.Type.StartsWith("KL"))
@@ -348,7 +348,7 @@ namespace TraysFastUpdate.Services
         public static void ReplacePlaceholdersWithImages(string trayName, string trayType)
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string wordFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_01 - Cable tray calculations - {trayName}.docx");
+            string wordFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {trayName}.docx");
 
             // Determine image paths based on trayType
             string diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
@@ -659,14 +659,21 @@ namespace TraysFastUpdate.Services
 
             if (purpose == "Power")
             {
-                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 3);
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
                 columns = (int)Math.Floor((double)bundle.Count / rows);
             }
             else if (purpose == "Control")
             {
-                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 7);
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
                 columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
             }
+
+            //if (bundle.Count == 2)
+            //{
+            //    rows = 1;
+            //    columns = 2;
+            //    return (rows, columns);
+            //}
 
             if (rows > columns)
             {
@@ -1074,4 +1081,3 @@ namespace TraysFastUpdate.Services
         }
     }
 }
-

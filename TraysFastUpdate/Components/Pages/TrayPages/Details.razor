@@ -312,8 +312,7 @@
                                         leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                                         bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                                     }
-                                }
-
+                                }                                   
                             }
                             else
                             {
@@ -347,6 +346,7 @@
                                         bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                                     }
                                 }
+
                             }
 
                             leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
@@ -365,6 +365,8 @@
                             int row = 0;
 
                             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+                            Cable biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
+                            double biggestCableDiameter = biggestCableInBundle.CableType.Diameter;
 
                             foreach (var cable in sortedCables)
                             {
@@ -395,8 +397,14 @@
                                     bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                                 }
                             }
+
                             rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
+
+                            // BottomRowControlCables.Add(biggestCableInBundle);
+                            // BottomRowControlCables.Add(biggestCableInBundle);
+                            // rightStartX -= biggestCableDiameter * canvasScale + spacing;
+
                         }
                     }
                     else if (bundle.Key == "MV")
@@ -477,14 +485,21 @@
 
         if (purpose == "Power")
         {
-            rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 3);
+            rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
             columns = (int)Math.Floor((double)bundle.Count / rows);
         }
         else if (purpose == "Control")
         {
-            rows = Math.Min((int)Math.Floor((trayHeight) / (diameter + spacing)), 7);
+            rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
             columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
         }
+
+        // if (bundle.Count == 2)
+        // {
+        //     rows = 1;
+        //     columns = 2;
+        //     return (rows, columns);
+        // }
 
         if (rows > columns)
         {
