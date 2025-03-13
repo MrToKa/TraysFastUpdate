@@ -43,7 +43,7 @@ namespace TraysFastUpdate.Services
 
         public async Task<List<CableType>> GetCablesTypesAsync()
         {
-            return await _repository.All<CableType>().ToListAsync();
+            return await _repository.All<CableType>().OrderBy(x => x.Id).ToListAsync();
         }
 
         public async Task<CableType> GetCableTypeAsync(int cableTypeId)

@@ -57,7 +57,7 @@ namespace TraysFastUpdate.Services
 
         public async Task<List<Cable>> GetCablesAsync()
         {
-            return await _repository.All<Cable>().ToListAsync();
+            return await _repository.All<Cable>().OrderBy(x => x.Id).ToListAsync();
         }
 
         public async Task UpdateCableAsync(Cable cable)

@@ -18,9 +18,9 @@
 
 <MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
     <MudButton Href="/trays"
-    Rel="nofollow"
-    Variant="Variant.Filled"
-    Color="Color.Primary">
+               Rel="nofollow"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
         Back to List
     </MudButton>
 </MudItem>
@@ -59,7 +59,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
-        Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
@@ -122,19 +122,19 @@
 <MudPaper>
     <MudItem Class="d-flex justify-space-between flex-grow-1 gap-4 pa-1 ma-1">
         <MudButton OnClick="GoToPreviousTray"
-        Rel="nofollow"
-        Variant="Variant.Filled"
-        Color="Color.Primary"
-        Disabled="@(Id <= 1)">
+                   Rel="nofollow"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(Id <= 1)">
             Previous Tray
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
 
         <MudButton OnClick="GoToNextTray"
-        Rel="nofollow"
-        Variant="Variant.Filled"
-        Color="Color.Primary"
-        Disabled="@(Id >= TraysCount)">
+                   Rel="nofollow"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(Id >= TraysCount)">
             Next Tray
         </MudButton>
     </MudItem>
@@ -143,7 +143,7 @@
 @code {
     [Parameter]
     public int Id { get; set; }
-    [Parameter] 
+    [Parameter]
     public int TraysCount { get; set; } // Total trays count
 
     private Tray Tray { get; set; } = new Tray();
@@ -274,6 +274,8 @@
                             int column = 0;
 
                             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+                            Cable biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
+                            double biggestCableDiameter = biggestCableInBundle.CableType.Diameter;
 
                             if (sortedBundle.Key == "42.1-60")
                             {
@@ -312,7 +314,7 @@
                                         leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                                         bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                                     }
-                                }                                   
+                                }
                             }
                             else
                             {
@@ -346,13 +348,17 @@
                                         bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                                     }
                                 }
-
                             }
+
+                            // BottomRowPowerCables.Add(biggestCableInBundle);
+                            // BottomRowPowerCables.Add(biggestCableInBundle);
 
                             leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                         }
                     }
+
+                    // "VFD" bundle key to be added... Cables to be on the right side...
 
                     else if (bundle.Key == "Control")
                     {
@@ -398,13 +404,11 @@
                                 }
                             }
 
+                            // BottomRowControlCables.Add(biggestCableInBundle);
+                            // BottomRowControlCables.Add(biggestCableInBundle);
+
                             rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
-
-                            // BottomRowControlCables.Add(biggestCableInBundle);
-                            // BottomRowControlCables.Add(biggestCableInBundle);
-                            // rightStartX -= biggestCableDiameter * canvasScale + spacing;
-
                         }
                     }
                     else if (bundle.Key == "MV")

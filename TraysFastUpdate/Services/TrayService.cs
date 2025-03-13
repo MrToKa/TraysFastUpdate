@@ -68,7 +68,7 @@ namespace TraysFastUpdate.Services
         }
         public async Task<List<Tray>> GetTraysAsync()
         {
-            return await _repository.All<Tray>().ToListAsync();
+            return await _repository.All<Tray>().OrderBy(x => x.Id).ToListAsync();
         }
         public async Task UpdateTrayAsync(Tray trayId)
         {
@@ -668,12 +668,12 @@ namespace TraysFastUpdate.Services
                 columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
             }
 
-            //if (bundle.Count == 2)
-            //{
-            //    rows = 1;
-            //    columns = 2;
-            //    return (rows, columns);
-            //}
+            if (bundle.Count == 2)
+            {
+                rows = 1;
+                columns = 2;
+                return (rows, columns);
+            }
 
             if (rows > columns)
             {
