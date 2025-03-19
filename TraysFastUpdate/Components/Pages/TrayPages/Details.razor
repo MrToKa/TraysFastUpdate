@@ -350,8 +350,8 @@
                                 }
                             }
 
-                            // BottomRowPowerCables.Add(biggestCableInBundle);
-                            // BottomRowPowerCables.Add(biggestCableInBundle);
+                            BottomRowPowerCables.Add(biggestCableInBundle);
+                            BottomRowPowerCables.Add(biggestCableInBundle);
 
                             leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
@@ -404,8 +404,8 @@
                                 }
                             }
 
-                            // BottomRowControlCables.Add(biggestCableInBundle);
-                            // BottomRowControlCables.Add(biggestCableInBundle);
+                            BottomRowControlCables.Add(biggestCableInBundle);
+                            BottomRowControlCables.Add(biggestCableInBundle);
 
                             rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
@@ -498,12 +498,12 @@
             columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
         }
 
-        // if (bundle.Count == 2)
-        // {
-        //     rows = 1;
-        //     columns = 2;
-        //     return (rows, columns);
-        // }
+        if (bundle.Count == 2)
+        {
+            rows = 1;
+            columns = 2;
+            return (rows, columns);
+        }
 
         if (rows > columns)
         {
