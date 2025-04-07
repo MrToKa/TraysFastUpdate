@@ -18,9 +18,9 @@
 
 <MudItem Class="d-flex justify-center flex-grow-1 ma-2 pa-2">
     <MudButton Href="/trays"
-               Rel="nofollow"
-               Variant="Variant.Filled"
-               Color="Color.Primary">
+    Rel="nofollow"
+    Variant="Variant.Filled"
+    Color="Color.Primary">
         Back to List
     </MudButton>
 </MudItem>
@@ -59,7 +59,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@CablesOnTray" ReadOnly="true"
-                     Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
+        Bordered="true" Dense="true" ColumnResizeMode="ResizeMode.Column">
             <Columns>
                 <TemplateColumn Title="No." CellClass="d-flex justify-center" Sortable="false" Filterable="false" Editable="false">
                     <CellTemplate>
@@ -122,19 +122,19 @@
 <MudPaper>
     <MudItem Class="d-flex justify-space-between flex-grow-1 gap-4 pa-1 ma-1">
         <MudButton OnClick="GoToPreviousTray"
-                   Rel="nofollow"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="@(Id <= 1)">
+        Rel="nofollow"
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Disabled="@(Id <= 1)">
             Previous Tray
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
 
         <MudButton OnClick="GoToNextTray"
-                   Rel="nofollow"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Disabled="@(Id >= TraysCount)">
+        Rel="nofollow"
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Disabled="@(Id >= TraysCount)">
             Next Tray
         </MudButton>
     </MudItem>
@@ -151,6 +151,7 @@
     private List<Cable> CablesOnTray = new List<Cable>();
     private List<Cable> BottomRowPowerCables = new List<Cable>();
     private List<Cable> BottomRowControlCables = new List<Cable>();
+    private List<Cable> BottomRowVFDCables = new List<Cable>();
 
     private Dictionary<string, Dictionary<string, List<Cable>>> CableBundles = new Dictionary<string, Dictionary<string, List<Cable>>>();
 
@@ -350,16 +351,16 @@
                                 }
                             }
 
-                            BottomRowPowerCables.Add(biggestCableInBundle);
-                            BottomRowPowerCables.Add(biggestCableInBundle);
+                            if (sortedBundles.IndexOf(sortedBundle) != sortedBundles.Count - 1)
+                            {
+                                BottomRowPowerCables.Add(biggestCableInBundle);
+                                BottomRowPowerCables.Add(biggestCableInBundle);
+                            }
 
                             leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
                         }
                     }
-
-                    // "VFD" bundle key to be added... Cables to be on the right side...
-
                     else if (bundle.Key == "Control")
                     {
                         var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
@@ -404,8 +405,11 @@
                                 }
                             }
 
-                            BottomRowControlCables.Add(biggestCableInBundle);
-                            BottomRowControlCables.Add(biggestCableInBundle);
+                            if (sortedBundles.IndexOf(sortedBundle) != sortedBundles.Count - 1)
+                            {
+                                BottomRowControlCables.Add(biggestCableInBundle);
+                                BottomRowControlCables.Add(biggestCableInBundle);
+                            }
 
                             rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
                             bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
@@ -472,7 +476,152 @@
                             }
                         }
                     }
+                    else if (bundle.Key == "VFD")
+                    {
+                        var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                        foreach (var sortedBundle in sortedBundles)
+                        {
+                            (int rows, int columns) = calculateRowsAndColumns(Tray.Height - CProfileHeight, 1, sortedBundle.Value, "VFD");
+                            int row = 0;
+                            int column = 0;
+
+                            if (sortedBundle.Key == "30.1-42" || sortedBundle.Key == "42.1-60")
+                            {
+                                double rightStartBottom = 0;
+                                double rightStartTop = 0;
+
+                                var groupedByToLocationCables = sortedBundle.Value.GroupBy(x => x.ToLocation).ToList();
+
+                                foreach (var group in groupedByToLocationCables)
+                                {
+                                    var sortedCables = group.OrderByDescending(x => x.CableType.Diameter).ToList();
+
+                                    rightStartBottom = bottomStartY;
+                                    rightStartTop = rightStartX - (sortedCables.ElementAt(0).CableType.Diameter / 2 + 0.5) * canvasScale;
+
+                                    foreach (var cable in sortedCables)
+                                    {
+                                        if (sortedCables.IndexOf(cable) == 2 && cable.CableType.Diameter <= 45)
+                                        {
+                                            bottomStartY -= ((cable.CableType.Diameter * canvasScale) / 2) * (Math.Sqrt(3) / 2) + ((cable.CableType.Diameter * canvasScale) / 2 - spacing * 2);
+                                            rightStartX = rightStartTop;
+                                            row = 1;
+                                        }
+
+                                        double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                        await ctx.BeginPathAsync();
+                                        await ctx.ArcAsync(rightStartX - radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                        await ctx.ClosePathAsync();
+                                        await ctx.StrokeAsync();
+                                        // Draw cable number inside the circle
+                                        await ctx.FontAsync("12px Arial");
+                                        await ctx.FillStyleAsync("black");
+                                        await ctx.TextAlignAsync(TextAlign.Center);
+                                        await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                        int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                        await ctx.FillTextAsync(cableNumber.ToString(), rightStartX - radius, bottomStartY - radius);
+                                        //bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
+                                        if (row == 0)
+                                        {
+                                            BottomRowVFDCables.Add(cable);
+                                            rightStartX -= (cable.CableType.Diameter + 1) * canvasScale;
+                                        }
+                                        if (row == 1)
+                                        {
+                                            row = 0;
+                                            bottomStartY = rightStartBottom;
+                                            rightStartX -= ((cable.CableType.Diameter * canvasScale) * 3.5);
+                                        }
+                                    }
+                                    if (sortedBundles.IndexOf(sortedBundle) != sortedBundles.Count - 1)
+                                    {
+                                        BottomRowVFDCables.Add(group.First());
+                                        BottomRowVFDCables.Add(group.First());
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+                                Cable biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
+                                double biggestCableDiameter = biggestCableInBundle.CableType.Diameter;
+
+                                foreach (var cable in sortedCables)
+                                {
+                                    double radius = cable.CableType.Diameter / 2 * canvasScale;
+                                    await ctx.BeginPathAsync();
+                                    await ctx.ArcAsync(rightStartX - radius, bottomStartY - radius, radius, 0, Math.PI * 2);
+                                    await ctx.ClosePathAsync();
+                                    await ctx.StrokeAsync();
+                                    // Draw cable number inside the circle
+                                    await ctx.FontAsync("12px Arial");
+                                    await ctx.FillStyleAsync("black");
+                                    await ctx.TextAlignAsync(TextAlign.Center);
+                                    await ctx.TextBaseLineAsync(TextBaseLine.Middle);
+                                    int cableNumber = CablesOnTray.IndexOf(cable) + 1;
+                                    await ctx.FillTextAsync(cableNumber.ToString(), rightStartX - radius, bottomStartY - radius);
+                                    bottomStartY -= cable.CableType.Diameter * canvasScale + spacing;
+
+                                    if (row == 0)
+                                    {
+                                        BottomRowVFDCables.Add(cable);
+                                    }
+
+                                    row++;
+                                    if (row == rows)
+                                    {
+                                        row = 0;
+                                        column++;
+                                        rightStartX -= cable.CableType.Diameter * canvasScale + spacing;
+                                        bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
+                                    }
+                                }
+                                if (sortedBundles.IndexOf(sortedBundle) != sortedBundles.Count - 1)
+                                {
+                                    BottomRowVFDCables.Add(biggestCableInBundle);
+                                    BottomRowVFDCables.Add(biggestCableInBundle);
+                                }
+                            }
+                        }
+
+                        rightStartX = 50 + Tray.Width * canvasScale - spacing - BottomRowVFDCables.Sum(x => x.CableType.Diameter + 1) * canvasScale;
+                        bottomStartY = 50 + (Tray.Height - CProfileHeight) * canvasScale;
+                    }
                 }
+
+                //draw separator if the tray contains two different types of cable types
+                if (Tray.Purpose == "Type B (Green color) for LV cables" && BottomRowPowerCables.Count > 0 && BottomRowVFDCables.Count > 0)
+                {
+                    double trayFreeSpace = Tray.Width - (BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) + BottomRowVFDCables.Sum(x => x.CableType.Diameter + 1));
+                    double separatorX = (BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) + trayFreeSpace / 2) * canvasScale;
+
+                    await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+                    await ctx.SaveAsync();
+                    await ctx.StrokeStyleAsync("black");
+                    await ctx.LineWidthAsync(2);
+                    await ctx.BeginPathAsync();
+                    await ctx.MoveToAsync(50 + separatorX, 50 + (Tray.Height - CProfileHeight) * canvasScale);
+                    await ctx.LineToAsync(50 + separatorX, 50 + (Tray.Height - CProfileHeight) * canvasScale - (Tray.Height - CProfileHeight * 2) * canvasScale);
+                    await ctx.StrokeAsync();
+                    await ctx.RestoreAsync();
+                }
+                else if (Tray.Purpose == "Type BC (Teal color) for LV and Instrumentation and  Control cables, divided by separator" && BottomRowPowerCables.Count > 0 && BottomRowControlCables.Count > 0)
+                {
+                    double trayFreeSpace = Tray.Width - (BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) + BottomRowControlCables.Sum(x => x.CableType.Diameter + 1));
+                    double separatorX = (BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) + trayFreeSpace / 2) * canvasScale;
+
+                    await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+                    await ctx.SaveAsync();
+                    await ctx.StrokeStyleAsync("black");
+                    await ctx.LineWidthAsync(2);
+                    await ctx.BeginPathAsync();
+                    await ctx.MoveToAsync(50 + separatorX, 50 + (Tray.Height - CProfileHeight) * canvasScale);
+                    await ctx.LineToAsync(50 + separatorX, 50 + (Tray.Height - CProfileHeight) * canvasScale - (Tray.Height - CProfileHeight * 2) * canvasScale);
+                    await ctx.StrokeAsync();
+                    await ctx.RestoreAsync();
+                }
+
             }
         }
         catch (Exception ex)
@@ -496,6 +645,11 @@
         {
             rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
             columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
+        }
+        else if (purpose == "VFD")
+        {
+            rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
+            columns = (int)Math.Floor((double)bundle.Count / rows);
         }
 
         if (bundle.Count == 2)

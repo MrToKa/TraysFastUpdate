@@ -41,7 +41,7 @@
     else
     {
         <MudDataGrid T="Cable" Items="@Elements" ReadOnly="false" EditMode="DataGridEditMode.Cell"
-        Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" CommittedItemChanges="@CommittedItemChanges" ColumnResizeMode="ResizeMode.Column">
+                     Bordered="true" Dense="true" EditTrigger="DataGridEditTrigger.OnRowClick" Filterable="true" FilterMode="@DataGridFilterMode.ColumnFilterMenu" Virtualize="true" FixedHeader="true" CommittedItemChanges="@CommittedItemChanges" ColumnResizeMode="ResizeMode.Column" FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive">
             <Columns>
                 <PropertyColumn Property="x => x.Tag" Title="Cable Tag" Hideable="false" />
                 <PropertyColumn Property="x => x.CableType.Type" Title="Cable Type" Hideable="false">

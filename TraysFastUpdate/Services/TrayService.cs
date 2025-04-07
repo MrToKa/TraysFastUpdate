@@ -14,6 +14,7 @@ using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Models;
 using TraysFastUpdate.Services.Contracts;
 using MudBlazor;
+using System.Linq;
 
 namespace TraysFastUpdate.Services
 {
@@ -176,79 +177,6 @@ namespace TraysFastUpdate.Services
             {
                 Directory.CreateDirectory(directoryPath);
             }
-
-            //string filePath = Path.Combine(directoryPath, $"{tray.Name}.xlsx");
-
-            //using MemoryStream memoryStream = new MemoryStream();
-            //using SpreadsheetDocument document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
-            //WorkbookPart workbookPart = document.AddWorkbookPart();
-            //workbookPart.Workbook = new Workbook();
-            //WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            //worksheetPart.Worksheet = new Worksheet(new SheetData());
-            //Sheets sheets = workbookPart.Workbook.AppendChild(new Sheets());
-            //Sheet sheet = new Sheet() { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Trays" };
-            //sheets.Append(sheet);
-            //SheetData sheetData = worksheetPart.Worksheet.Elements<SheetData>().First();
-            //Row headerRow = new Row();
-            //headerRow.Append(
-            //    new Cell() { CellValue = new CellValue("Name"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Type"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Purpose"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Width"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Height"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Length"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Weight"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Count"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Total Weight"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Supports Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Tray Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Tray Own Weight Load"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Cables Weight Per Meter"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Cables Weight Load"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Total Weight Load Per Meter"), DataType = CellValues.String },
-            //    new Cell()
-            //    {
-            //        CellValue = new CellValue("Total Weight Load"),
-            //        DataType = CellValues.String
-            //    },
-            //    new Cell() { CellValue = new CellValue("Space Occupied"), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue("Space Available"), DataType = CellValues.String }
-            //    );
-            //sheetData.AppendChild(headerRow);
-
-            //Row dataRow = new Row();
-
-            //dataRow.Append(
-            //    new Cell() { CellValue = new CellValue(tray.Name), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Type), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Purpose), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Width.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Height.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Length.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.Weight.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsCount.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsTotalWeight.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SupportsWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TrayWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TrayOwnWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.CablesWeightPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.CablesWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoadPerMeter.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.TotalWeightLoad.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SpaceOccupied.ToString()), DataType = CellValues.String },
-            //    new Cell() { CellValue = new CellValue(tray.SpaceAvailable.ToString()), DataType = CellValues.String }
-            //    );
-
-            //sheetData.AppendChild(dataRow);
-
-            //workbookPart.Workbook.Save();
-            //document.Dispose();
-
-            //memoryStream.Position = 0;
-
-            //await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            //await memoryStream.CopyToAsync(fileStream);
-            //memoryStream.Close();
 
             string reportType = "";
 
@@ -625,6 +553,59 @@ namespace TraysFastUpdate.Services
                         }
                     }
                 }
+                else if (bundle.Key == "VFD")
+                {
+                    var sortedBundles = bundle.Value.OrderByDescending(x => x.Value[0].CableType.Diameter).ToList();
+
+                    foreach (var sortedBundle in sortedBundles)
+                    {
+                        (int rows, int columns) = CalculateRowsAndColumns(tray.Height - CProfileHeight, 1, sortedBundle.Value, "VFD");
+
+                        int row = 0;
+                        int column = 0;
+
+                        if (sortedBundle.Key == "30.1-42" || sortedBundle.Key == "42.1-60")
+                        {
+                            var groupByToLocation = sortedBundle.Value.GroupBy(x => x.ToLocation).ToList();
+                            foreach (var cableGroup in groupByToLocation)
+                            {
+                                cableGroup.ToList().ForEach(cable =>
+                                {
+                                    int cableIndex = cableGroup.ToList().IndexOf(cable);
+                                    if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45)
+                                    {
+                                        return;
+                                    }
+
+                                    bottomRow += cable.CableType.Diameter;
+                                    bottomRow += spacing;
+
+                                    cablesBottomRow.Add(cable);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
+                            foreach (var cable in sortedCables)
+                            {
+                                if (row == 0)
+                                {
+                                    bottomRow += cable.CableType.Diameter;
+                                    bottomRow += spacing;
+
+                                    cablesBottomRow.Add(cable);
+                                }
+                                row++;
+                                if (row == rows)
+                                {
+                                    row = 0;
+                                    column++;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             var groupedByDiameterCables = cablesBottomRow.GroupBy(x => x.CableType.Diameter).ToList();
@@ -666,6 +647,11 @@ namespace TraysFastUpdate.Services
             {
                 rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
                 columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
+            }
+            else if (purpose == "VFD")
+            {
+                rows = Math.Min((int)Math.Floor((trayHeight) / (diameter)), 2);
+                columns = (int)Math.Floor((double)bundle.Count / rows);
             }
 
             if (bundle.Count == 2)
@@ -943,7 +929,7 @@ namespace TraysFastUpdate.Services
                 Console.WriteLine(ex.Message);
             }
         }
-        public async Task ExportTrayTableEntriesAsync() 
+        public async Task ExportTrayTableEntriesAsync()
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             //Remove the old file
@@ -1031,7 +1017,7 @@ namespace TraysFastUpdate.Services
                 else
                 {
                     cell.CellValue = new CellValue(trays[index: i].SpaceAvailable?.ToString("F2"));
-                }                
+                }
                 cell.DataType = new EnumValue<CellValues>(CellValues.String);
                 row.Append(cell);
             }
