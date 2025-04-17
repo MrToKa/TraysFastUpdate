@@ -54,6 +54,7 @@
                 <PropertyColumn Property="x => x.Height" Title="Tray Height [mm]" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Length" Title="Tray Length [mm]" Hideable="false" CellClass="cursor-pointer" />
                 <PropertyColumn Property="x => x.Weight" Title="Tray Weight [kg/m]" Hideable="false" CellClass="cursor-pointer" />
+                <PropertyColumn Property="x => x.TotalWeightLoadPerMeter" Title="Load Per Meter [kg/m]" Hideable="false" CellClass="cursor-pointer" />
                 <TemplateColumn Title="Available Space [%]" CellStyleFunc="@_cellStyleFunc" CellClass="cursor-pointer" >
                     <CellTemplate>
                         @if (context.Item.Purpose == "Type A (Pink color) for MV cables")

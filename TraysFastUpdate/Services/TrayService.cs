@@ -52,6 +52,7 @@ namespace TraysFastUpdate.Services
 
             await UpdateTrayAsync(tray);
         }
+
         public async Task DeleteTrayAsync(int trayId)
         {
             var tray = await _repository.All<Tray>().FirstOrDefaultAsync(t => t.Id == trayId);
@@ -69,6 +70,11 @@ namespace TraysFastUpdate.Services
         }
         public async Task<List<Tray>> GetTraysAsync()
         {
+            if (_repository.All<Tray>().Count() == 0)
+            {
+                return new List<Tray>();
+            }
+
             return await _repository.All<Tray>().OrderBy(x => x.Id).ToListAsync();
         }
         public async Task UpdateTrayAsync(Tray trayId)

@@ -22,7 +22,17 @@ namespace TraysFastUpdate.Services
             bool cableExists = await _repository.All<Cable>().AnyAsync(c => c.Tag == cable.Tag && c.CableType == cable.CableType && c.FromLocation == cable.FromLocation && cable.ToLocation == cable.ToLocation);
             if (cableExists)
             {
-                await UpdateCableAsync(cable);
+                Cable cableToUpdate = new Cable
+                {
+                    Id = await _repository.All<Cable>().Where(c => c.Tag == cable.Tag && c.CableType == cable.CableType && c.FromLocation == cable.FromLocation && cable.ToLocation == cable.ToLocation).Select(c => c.Id).FirstOrDefaultAsync(),
+                    Tag = cable.Tag,
+                    FromLocation = cable.FromLocation,
+                    ToLocation = cable.ToLocation,
+                    Routing = cable.Routing,
+                    CableTypeId = cable.CableTypeId
+                };
+
+                await UpdateCableAsync(cableToUpdate);
                 return;
             }
 
