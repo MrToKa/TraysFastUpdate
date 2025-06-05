@@ -21,7 +21,7 @@ namespace TraysFastUpdate.Services
     public class TrayService : ITrayService
     {
         private const double supportsWeight = 5.416;
-        private const double KLDistance = 1.5;
+        private const double KLDistance = 2;
         private const double WSLDistance = 5.5;
         private const double CProfileHeight = 15;
         private const double spacing = 1;
@@ -41,6 +41,19 @@ namespace TraysFastUpdate.Services
             bool trayExists = _repository.All<Tray>().Any(t => t.Name == tray.Name);
             if (trayExists)
             {
+                Tray trayToUpdate = new Tray()
+                {
+                    Id = await _repository.All<Tray>().Where(t => t.Name == tray.Name).Select(t => t.Id).FirstOrDefaultAsync(),
+                    Name = tray.Name,
+                    Type = tray.Type,
+                    Purpose = tray.Purpose,
+                    Width = tray.Width,
+                    Height = tray.Height,
+                    Length = tray.Length,
+                    Weight = tray.Weight
+                };
+
+                await UpdateTrayAsync(trayToUpdate);
                 return;
             }
 
@@ -49,10 +62,7 @@ namespace TraysFastUpdate.Services
 
             await _repository.AddAsync(tray);
             await _repository.SaveChangesAsync();
-
-            await UpdateTrayAsync(tray);
         }
-
         public async Task DeleteTrayAsync(int trayId)
         {
             var tray = await _repository.All<Tray>().FirstOrDefaultAsync(t => t.Id == trayId);
@@ -195,17 +205,17 @@ namespace TraysFastUpdate.Services
                 reportType = "ReportMacroTemplate_Space.docx";
             }
 
-            string wwwrootPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             await ExportWordReportAsync(wwwrootPath, reportType, tray);
 
         }
         public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
         {
             //remove old file
-            string oldFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {tray.Name}.docx");
+            string oldFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_03 - Cable tray calculations - {tray.Name}.docx");
 
-            string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
-            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {tray.Name}.docx");
+            string templatePath = Path.Combine(wwwrootPath, templateFileName);
+            string newFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_03 - Cable tray calculations - {tray.Name}.docx");
 
             double distance = 0;
             if (tray.Type.StartsWith("KL"))
@@ -253,7 +263,7 @@ namespace TraysFastUpdate.Services
         { "{DocNo}", "10004084142" },
         { "{DocType}", "TED" },
         { "{DocPart}", "001" },
-        { "{RevNo}", "02" },
+        { "{RevNo}", "03" },
         { "{TodayDate}", DateTime.Now.ToString("dd-MM-yyyy") } // Today's date
     };
 
@@ -282,7 +292,7 @@ namespace TraysFastUpdate.Services
         public static void ReplacePlaceholdersWithImages(string trayName, string trayType)
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string wordFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_02 - Cable tray calculations - {trayName}.docx");
+            string wordFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_03 - Cable tray calculations - {trayName}.docx");
 
             // Determine image paths based on trayType
             string diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
@@ -490,7 +500,7 @@ namespace TraysFastUpdate.Services
 
                         var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
 
-                        if (sortedBundle.Key == "42.1-60")
+                        if (sortedBundle.Key == "40.1-44.5" || sortedBundle.Key == "44.6 - 60")
                         {
                             foreach (var cable in sortedCables)
                             {
@@ -679,7 +689,7 @@ namespace TraysFastUpdate.Services
         {
             if (element == null) return;
 
-            foreach (var paragraph in element.Descendants<DocumentFormat.OpenXml.Wordprocessing.Paragraph>())
+            foreach (var paragraph in element.Descendants<Paragraph>())
             {
                 string paragraphText = string.Join("", paragraph.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>().Select(t => t.Text));
 
@@ -724,7 +734,7 @@ namespace TraysFastUpdate.Services
 
                 if (placeholderText != null)
                 {
-                    var parentParagraph = placeholderText.Ancestors<DocumentFormat.OpenXml.Wordprocessing.Paragraph>().FirstOrDefault();
+                    var parentParagraph = placeholderText.Ancestors<Paragraph>().FirstOrDefault();
                     if (parentParagraph != null)
                     {
                         // Remove the placeholder text
@@ -747,14 +757,14 @@ namespace TraysFastUpdate.Services
             DocumentFormat.OpenXml.Wordprocessing.Table table = new DocumentFormat.OpenXml.Wordprocessing.Table();
 
             // Define table properties (border, width, alignment)
-            DocumentFormat.OpenXml.Wordprocessing.TableProperties tblProps = new DocumentFormat.OpenXml.Wordprocessing.TableProperties(
+            TableProperties tblProps = new TableProperties(
                 new TableBorders(
                     new DocumentFormat.OpenXml.Wordprocessing.TopBorder() { Val = BorderValues.Single, Size = 8 },
                     new DocumentFormat.OpenXml.Wordprocessing.BottomBorder() { Val = BorderValues.Single, Size = 8 },
                     new DocumentFormat.OpenXml.Wordprocessing.LeftBorder() { Val = BorderValues.Single, Size = 8 },
                     new DocumentFormat.OpenXml.Wordprocessing.RightBorder() { Val = BorderValues.Single, Size = 8 },
-                    new DocumentFormat.OpenXml.Wordprocessing.InsideHorizontalBorder() { Val = BorderValues.Single, Size = 4 },
-                    new DocumentFormat.OpenXml.Wordprocessing.InsideVerticalBorder() { Val = BorderValues.Single, Size = 4 }
+                    new InsideHorizontalBorder() { Val = BorderValues.Single, Size = 4 },
+                    new InsideVerticalBorder() { Val = BorderValues.Single, Size = 4 }
                 )
             );
             table.AppendChild(tblProps);
@@ -763,10 +773,10 @@ namespace TraysFastUpdate.Services
             int[] columnWidths = { 1000, 3000, 5000, 2000, 2000 }; // Wider "Cable type" column
 
             // Add header row
-            DocumentFormat.OpenXml.Wordprocessing.TableRow headerRow = new DocumentFormat.OpenXml.Wordprocessing.TableRow();
+            TableRow headerRow = new TableRow();
             for (int i = 0; i < headers.Length; i++)
             {
-                DocumentFormat.OpenXml.Wordprocessing.TableCell cell = CreateTableCell(headers[i], true, columnWidths[i]); // Pass width
+                TableCell cell = CreateTableCell(headers[i], true, columnWidths[i]); // Pass width
                 headerRow.Append(cell);
             }
             table.Append(headerRow);
@@ -775,7 +785,7 @@ namespace TraysFastUpdate.Services
             int index = 1;
             foreach (var cable in cablesOnTray)
             {
-                DocumentFormat.OpenXml.Wordprocessing.TableRow row = new DocumentFormat.OpenXml.Wordprocessing.TableRow();
+                TableRow row = new TableRow();
 
                 row.Append(CreateTableCell(index.ToString(), false, columnWidths[0])); // Auto-incrementing No.
                 row.Append(CreateTableCell(cable.Tag, false, columnWidths[1])); // Cable name

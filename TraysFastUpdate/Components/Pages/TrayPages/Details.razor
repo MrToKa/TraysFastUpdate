@@ -33,7 +33,7 @@
                 <MudText Typo="Typo.h6" Class="d-flex justify-center flex-grow-1 gap-4">Tray general information</MudText>
                 <MudCard>
                     <MudCardContent>
-                        <MudTextField @bind-Value="Tray.Name" For="@(() => Tray.Name)" Label="Tray Name" ReadOnly="true" />
+                        <MudTextField @bind-Value="Tray.Name" For="@(() => Tray.Name)" Label="Tray Name" ReadOnly="false" />
                         <MudTextField @bind-Value="Tray.Type" For="@(() => Tray.Type)" Label="Tray Type" ReadOnly="false" />
                         <MudTextField @bind-Value="Tray.Purpose" For="@(() => Tray.Purpose)" Label="Tray Purpose" ReadOnly="false" />
                         <MudNumericField @bind-Value="Tray.Width" For="@(() => Tray.Width)" Label="Tray Width [mm]" ReadOnly="false" />
@@ -278,12 +278,12 @@
                             Cable biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
                             double biggestCableDiameter = biggestCableInBundle.CableType.Diameter;
 
-                            if (sortedBundle.Key == "42.1-60")
+                            if (sortedBundle.Key == "40.1-44.5" || sortedBundle.Key == "44.6-60")
                             {
                                 foreach (var cable in sortedCables)
                                 {
                                     int cableIndex = sortedCables.IndexOf(cable);
-                                    if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45)
+                                    if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45 && Tray.Height - CProfileHeight > 45)
                                     {
                                         bottomStartY -= ((cable.CableType.Diameter * canvasScale) / 2) * (Math.Sqrt(3) / 2) + ((cable.CableType.Diameter * canvasScale) / 2) - spacing * 2;
                                         leftStartX = 50 + spacing + BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * canvasScale - (cable.CableType.Diameter * canvasScale + spacing) * 1.5;
@@ -486,7 +486,7 @@
                             int row = 0;
                             int column = 0;
 
-                            if (sortedBundle.Key == "30.1-42" || sortedBundle.Key == "42.1-60")
+                            if (sortedBundle.Key == "30.1-40" || sortedBundle.Key == "40.1-44.5")
                             {
                                 double rightStartBottom = 0;
                                 double rightStartTop = 0;
