@@ -31,6 +31,7 @@
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SimCardDownload" DropShadow="false" OnClick="@ExportCableTypesTableAsync">Export Full Report</MudButton>
 </MudItem>
 
 <MudPaper Elevation="0" Class="pa-1 ma-2" Style="@($"background: #BDBDBD;")">
@@ -120,6 +121,19 @@
         {
             await ClearAsync();
             await ReloadDataAsync();
+        }
+    }
+
+    private async Task ExportCableTypesTableAsync()
+    {
+        try
+        {
+            await CableTypeService.ExportCableTypesTableEntriesAsync();
+            Snackbar.Add("Cable types table was exported successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }
