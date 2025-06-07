@@ -125,7 +125,7 @@
         Rel="nofollow"
         Variant="Variant.Filled"
         Color="Color.Primary"
-        Disabled="@(Id <= 1)">
+        Disabled="@(_currentTrayIndex <= 0)">
             Previous Tray
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
@@ -134,7 +134,7 @@
         Rel="nofollow"
         Variant="Variant.Filled"
         Color="Color.Primary"
-        Disabled="@(Id >= TraysCount)">
+        Disabled="@(_currentTrayIndex >= TrayIds.Count - 1)">
             Next Tray
         </MudButton>
     </MudItem>
@@ -164,6 +164,40 @@
     private double CanvasWidth => ((Tray.Width) * canvasScale) + 100;
     private double CanvasHeight => ((Tray.Height) * canvasScale) + 100;
 
+    private List<int> TrayIds = new List<int>();
+    private int _currentTrayIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var trays = await TrayService.GetTraysAsync();
+        TrayIds = trays.OrderBy(t => t.Id).Select(t => t.Id).ToList();
+        _currentTrayIndex = TrayIds.IndexOf(Id);
+        if (_currentTrayIndex == -1 && TrayIds.Count > 0)
+        {
+            // If the current Id is not found (e.g., deleted), fallback to first tray
+            Id = TrayIds[0];
+            _currentTrayIndex = 0;
+        }
+        Tray = await TrayService.GetTrayAsync(Id);
+        await TrayService.UpdateTrayAsync(Tray);
+        CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
+        CableBundles = await CableService.GetCablesBundlesOnTrayAsync(Tray);
+        TraysCount = TrayIds.Count;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (TrayIds.Count > 0)
+        {
+            _currentTrayIndex = TrayIds.IndexOf(Id);
+            if (_currentTrayIndex == -1)
+            {
+                Id = TrayIds[0];
+                _currentTrayIndex = 0;
+            }
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -176,15 +210,6 @@
     {
         await InvokeAsync(StateHasChanged);
         await DrawTray();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        Tray = await TrayService.GetTrayAsync(Id);
-        await TrayService.UpdateTrayAsync(Tray);
-        CablesOnTray = await CableService.GetCablesOnTrayAsync(Tray);
-        CableBundles = await CableService.GetCablesBundlesOnTrayAsync(Tray);
-        TraysCount = await TrayService.GetTraysCountAsync();
     }
 
     private async Task HandleValidSubmit()
@@ -684,17 +709,19 @@
 
     private void GoToPreviousTray()
     {
-        if (Id > 1)
+        if (_currentTrayIndex > 0)
         {
-            NavigationManager.NavigateTo($"/trays/details/{Id - 1}", forceLoad: true);
+            var prevId = TrayIds[_currentTrayIndex - 1];
+            NavigationManager.NavigateTo($"/trays/details/{prevId}", forceLoad: true);
         }
     }
 
     private void GoToNextTray()
     {
-        if (Id < TraysCount)
+        if (_currentTrayIndex < TrayIds.Count - 1)
         {
-            NavigationManager.NavigateTo($"/trays/details/{Id + 1}", forceLoad: true);
+            var nextId = TrayIds[_currentTrayIndex + 1];
+            NavigationManager.NavigateTo($"/trays/details/{nextId}", forceLoad: true);
         }
     }
 
