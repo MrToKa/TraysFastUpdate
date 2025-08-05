@@ -212,10 +212,10 @@ namespace TraysFastUpdate.Services
         public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
         {
             //remove old file
-            string oldFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_03 - Cable tray calculations - {tray.Name}.docx");
+            string oldFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_04 - Cable tray calculations - {tray.Name}.docx");
 
             string templatePath = Path.Combine(wwwrootPath, templateFileName);
-            string newFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_03 - Cable tray calculations - {tray.Name}.docx");
+            string newFilePath = Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_04 - Cable tray calculations - {tray.Name}.docx");
 
             double distance = 0;
             if (tray.Type.StartsWith("KL"))
