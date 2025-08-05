@@ -455,6 +455,25 @@
 
                             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
 
+                            // Phase rotations
+                            var phaseRotations = new List<Cable>();
+                            int blockSize = 6;
+                            for (int i = 0; i < sortedCables.Count; i += blockSize)
+                            {
+                                var block = sortedCables.Skip(i).Take(blockSize).ToList();
+
+                                var firstHalf = block.Take(blockSize / 2)
+                                                     .Skip(1)
+                                                     .Concat(block.Take(1)); // rotate left
+
+                                var secondHalf = block.Skip(blockSize / 2)
+                                                      .Reverse(); // reverse second half
+
+                                phaseRotations.AddRange(firstHalf.Concat(secondHalf));
+                            }
+
+                            sortedCables = phaseRotations;
+
                             leftStartX = 50 + spacing; // + sortedCables.ElementAt(0).CableType.Diameter;
 
                             leftStartBottom = leftStartX;
