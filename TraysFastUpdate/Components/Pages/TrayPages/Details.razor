@@ -177,7 +177,32 @@ else
             Disabled="@(_currentTrayIndex <= 0)">
                 Previous Tray
             </MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ExportTrayData">Export Documentation</MudButton>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Success" 
+                          OnClick="@ExportTrayData"
+                          StartIcon="@Icons.Material.Filled.Description"
+                          Disabled="@(!_canvasInitialized || !_jsRuntimeReady)">
+                    Export Documentation
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Primary" 
+                          OnClick="@ExportCanvasOnly"
+                          StartIcon="@Icons.Material.Filled.Image"
+                          Disabled="@(!_canvasInitialized || !_jsRuntimeReady)">
+                    Save Canvas Image
+                </MudButton>
+                
+                <MudButton Variant="Variant.Text" 
+                          Color="Color.Info" 
+                          OnClick="@DebugCanvasState"
+                          StartIcon="@Icons.Material.Filled.BugReport"
+                          Size="Size.Small">
+                    Debug Canvas
+                </MudButton>
+            </div>
 
             <MudButton OnClick="GoToNextTray"
             Rel="nofollow"

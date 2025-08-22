@@ -46,6 +46,7 @@ namespace TraysFastUpdate
             builder.Services.AddScoped<IFileExportService, FileExportService>();
             builder.Services.AddScoped<IWordExportService, WordExportService>();
             builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
+            builder.Services.AddScoped<ServerSideCanvasService>(); // Add this line
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<TraysFastUpdateDbContext>(options =>

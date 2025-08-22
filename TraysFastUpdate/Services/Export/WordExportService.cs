@@ -25,38 +25,69 @@ public class WordExportService : IWordExportService
 
     public async Task ExportWordReportAsync(string wwwrootPath, string templateFileName, Tray tray)
     {
-        string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
-        string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_04 - Cable tray calculations - {tray.Name}.docx");
-
-        double distance = GetDistanceByTrayType(tray.Type);
-
-        // Copy template and rename it
-        File.Copy(templatePath, newFilePath, true);
-
-        var replacements = CreateReplacementsDictionary(tray, distance);
-
-        using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(newFilePath, true))
+        try
         {
-            var mainPart = wordDoc.MainDocumentPart;
-            if (mainPart == null) return;
+            string templatePath = System.IO.Path.Combine(wwwrootPath, templateFileName);
+            string newFileName = $"TED_10004084142_001_04 - Cable tray calculations - {tray.Name}.docx";
+            string newFilePath = System.IO.Path.Combine(wwwrootPath, "files", newFileName);
 
-            // Replace text in the document body
-            ReplaceTextInElement(mainPart.Document.Body, replacements);
+            Console.WriteLine($"Template path: {templatePath}");
+            Console.WriteLine($"Output path: {newFilePath}");
 
-            // Replace text in all footers
-            if (mainPart.FooterParts != null)
+            // Verify template exists
+            if (!File.Exists(templatePath))
             {
-                foreach (var footer in mainPart.FooterParts)
-                {
-                    ReplaceTextInElement(footer.Footer, replacements);
-                }
+                throw new FileNotFoundException($"Template file not found: {templatePath}");
             }
 
-            wordDoc.MainDocumentPart.Document.Save();
+            double distance = GetDistanceByTrayType(tray.Type);
+
+            // Create a copy of the template (DO NOT MODIFY THE ORIGINAL)
+            File.Copy(templatePath, newFilePath, true);
+            Console.WriteLine($"Template copied to: {newFilePath}");
+
+            var replacements = CreateReplacementsDictionary(tray, distance);
+
+            // Work only with the copy
+            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(newFilePath, true))
+            {
+                var mainPart = wordDoc.MainDocumentPart;
+                if (mainPart == null) 
+                {
+                    throw new InvalidOperationException("MainDocumentPart is null");
+                }
+
+                Console.WriteLine("Processing text replacements...");
+                // Replace text in the document body
+                ReplaceTextInElement(mainPart.Document.Body, replacements);
+
+                // Replace text in all footers
+                if (mainPart.FooterParts != null)
+                {
+                    foreach (var footer in mainPart.FooterParts)
+                    {
+                        ReplaceTextInElement(footer.Footer, replacements);
+                    }
+                }
+
+                wordDoc.MainDocumentPart.Document.Save();
+                Console.WriteLine("Text replacements completed");
+            }
+            
+            Console.WriteLine("Inserting cable table...");
+            await InsertCableTableAsync(newFilePath, tray);
+            
+            Console.WriteLine("Processing image placeholders...");
+            await ReplacePlaceholdersWithImagesAsync(tray.Name, tray.Type);
+            
+            Console.WriteLine($"Word document export completed: {newFilePath}");
         }
-        
-        await InsertCableTableAsync(newFilePath, tray);
-        await ReplacePlaceholdersWithImagesAsync(tray.Name, tray.Type);
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in WordExportService.ExportWordReportAsync: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private static double GetDistanceByTrayType(string trayType)
@@ -145,37 +176,51 @@ public class WordExportService : IWordExportService
 
     private async Task InsertCableTableAsync(string filePath, Tray tray)
     {
-        List<Cable> cablesOnTray = await _cableService.GetCablesOnTrayAsync(tray);
-
-        using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(filePath, true))
+        try
         {
-            var mainPart = wordDoc.MainDocumentPart;
-            if (mainPart == null) return;
-            
-            var body = mainPart.Document.Body;
-            if (body == null) return;
+            List<Cable> cablesOnTray = await _cableService.GetCablesOnTrayAsync(tray);
+            Console.WriteLine($"Retrieved {cablesOnTray.Count} cables for table insertion");
 
-            // Locate the placeholder
-            var placeholderText = body.Descendants<W.Text>()
-                .FirstOrDefault(t => t.Text.Trim() == "{CablesTable}");
-
-            if (placeholderText != null)
+            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(filePath, true))
             {
-                var parentParagraph = placeholderText.Ancestors<W.Paragraph>().FirstOrDefault();
-                if (parentParagraph != null)
+                var mainPart = wordDoc.MainDocumentPart;
+                if (mainPart == null) return;
+                
+                var body = mainPart.Document.Body;
+                if (body == null) return;
+
+                // Locate the placeholder
+                var placeholderText = body.Descendants<W.Text>()
+                    .FirstOrDefault(t => t.Text.Trim() == "{CablesTable}");
+
+                if (placeholderText != null)
                 {
-                    // Remove the placeholder text
-                    placeholderText.Text = "";
+                    var parentParagraph = placeholderText.Ancestors<W.Paragraph>().FirstOrDefault();
+                    if (parentParagraph != null)
+                    {
+                        // Remove the placeholder text
+                        placeholderText.Text = "";
 
-                    // Create the table
-                    W.Table table = CreateCableTable(cablesOnTray);
+                        // Create the table
+                        W.Table table = CreateCableTable(cablesOnTray);
 
-                    // Replace the paragraph with the table
-                    body.ReplaceChild(table, parentParagraph);
+                        // Replace the paragraph with the table
+                        body.ReplaceChild(table, parentParagraph);
+                        Console.WriteLine("Cable table inserted successfully");
+                    }
                 }
-            }
+                else
+                {
+                    Console.WriteLine("Cable table placeholder not found");
+                }
 
-            wordDoc.MainDocumentPart.Document.Save();
+                wordDoc.MainDocumentPart.Document.Save();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inserting cable table: {ex.Message}");
+            throw;
         }
     }
 
@@ -245,66 +290,95 @@ public class WordExportService : IWordExportService
     {
         await Task.Run(() =>
         {
-            string wwwrootPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string wordFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_04 - Cable tray calculations - {trayName}.docx");
-
-            // Determine image paths based on trayType
-            string? diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
-                                    trayType.StartsWith("WSL") ? "WSL Diagram.jpg" : null;
-
-            string? trayPicPath = trayType.StartsWith("KL") ? "KL TrayPicture.jpg" :
-                                 trayType.StartsWith("WSL") ? "WSL TrayPicture.jpg" : null;
-
-            if (diagramPicPath == null || trayPicPath == null)
+            try
             {
-                Console.WriteLine("Unsupported tray type for image replacement.");
-                return;
+                string wwwrootPath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                string wordFilePath = System.IO.Path.Combine(wwwrootPath, "files", $"TED_10004084142_001_04 - Cable tray calculations - {trayName}.docx");
+
+                // Determine image paths based on trayType
+                string? diagramPicPath = trayType.StartsWith("KL") ? "KL Diagram.jpg" :
+                                        trayType.StartsWith("WSL") ? "WSL Diagram.jpg" : null;
+
+                string? trayPicPath = trayType.StartsWith("KL") ? "KL TrayPicture.jpg" :
+                                     trayType.StartsWith("WSL") ? "WSL TrayPicture.jpg" : null;
+
+                if (diagramPicPath == null || trayPicPath == null)
+                {
+                    Console.WriteLine("Unsupported tray type for image replacement.");
+                    return;
+                }
+
+                string diagramImagePath = System.IO.Path.Combine(wwwrootPath, diagramPicPath);
+                string trayImagePath = System.IO.Path.Combine(wwwrootPath, trayPicPath);
+                string fillPicture = System.IO.Path.Combine(wwwrootPath, "images", $"{trayName}.jpg");
+
+                if (!File.Exists(wordFilePath))
+                {
+                    Console.WriteLine($"Word file not found: {wordFilePath}");
+                    return;
+                }
+
+                Console.WriteLine($"Processing image replacements for: {wordFilePath}");
+
+                // Open Word document
+                using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(wordFilePath, true))
+                {
+                    MainDocumentPart? mainPart = wordDoc.MainDocumentPart;
+                    if (mainPart == null) return;
+
+                    // Replace placeholders with images
+                    ReplacePlaceholderWithImage(mainPart, "{DiagramTrayPic}", diagramImagePath);
+                    ReplacePlaceholderWithImage(mainPart, "{TrayPicture}", trayImagePath);
+                    ReplacePlaceholderWithImage(mainPart, "{FillPicture}", fillPicture);
+
+                    wordDoc.Save();
+                    Console.WriteLine("Image replacements completed");
+                }
             }
-
-            string diagramImagePath = System.IO.Path.Combine(wwwrootPath, diagramPicPath);
-            string trayImagePath = System.IO.Path.Combine(wwwrootPath, trayPicPath);
-            string fillPicture = System.IO.Path.Combine(wwwrootPath, "images", $"{trayName}.jpg");
-
-            if (!File.Exists(wordFilePath))
+            catch (Exception ex)
             {
-                Console.WriteLine($"Word file not found: {wordFilePath}");
-                return;
-            }
-
-            // Open Word document
-            using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(wordFilePath, true))
-            {
-                MainDocumentPart? mainPart = wordDoc.MainDocumentPart;
-                if (mainPart == null) return;
-
-                // Replace placeholders with images
-                ReplacePlaceholderWithImage(mainPart, "{DiagramTrayPic}", diagramImagePath);
-                ReplacePlaceholderWithImage(mainPart, "{TrayPicture}", trayImagePath);
-                ReplacePlaceholderWithImage(mainPart, "{FillPicture}", fillPicture);
-
-                wordDoc.Save();
+                Console.WriteLine($"Error in image replacement: {ex.Message}");
+                throw;
             }
         });
     }
 
     private static void ReplacePlaceholderWithImage(MainDocumentPart mainPart, string placeholder, string imagePath)
     {
-        var paragraphs = mainPart.Document.Body?.Elements<W.Paragraph>()
-            .Where(p => p.InnerText.Contains(placeholder)).ToList();
-
-        if (paragraphs == null || !paragraphs.Any() || !File.Exists(imagePath)) return;
-
-        foreach (var paragraph in paragraphs)
+        try
         {
-            W.Run? run = paragraph.Elements<W.Run>().FirstOrDefault();
-            if (run != null)
-            {
-                run.RemoveAllChildren<W.Text>();
-                run.AppendChild(new W.Text(""));
+            var paragraphs = mainPart.Document.Body?.Elements<W.Paragraph>()
+                .Where(p => p.InnerText.Contains(placeholder)).ToList();
 
-                // Insert image
-                AddImageToRun(mainPart, run, imagePath);
+            if (paragraphs == null || !paragraphs.Any())
+            {
+                Console.WriteLine($"Placeholder {placeholder} not found");
+                return;
             }
+
+            if (!File.Exists(imagePath))
+            {
+                Console.WriteLine($"Image file not found: {imagePath}");
+                return;
+            }
+
+            foreach (var paragraph in paragraphs)
+            {
+                W.Run? run = paragraph.Elements<W.Run>().FirstOrDefault();
+                if (run != null)
+                {
+                    run.RemoveAllChildren<W.Text>();
+                    run.AppendChild(new W.Text(""));
+
+                    // Insert image
+                    AddImageToRun(mainPart, run, imagePath);
+                    Console.WriteLine($"Replaced {placeholder} with {imagePath}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error replacing placeholder {placeholder}: {ex.Message}");
         }
     }
 
@@ -392,6 +466,7 @@ public class WordExportService : IWordExportService
         catch (Exception ex)
         {
             Console.WriteLine($"Error adding image to Word document: {ex.Message}");
+            throw;
         }
     }
 }

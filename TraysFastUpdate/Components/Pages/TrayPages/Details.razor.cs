@@ -333,13 +333,262 @@ public partial class Details : IDisposable
     {
         try
         {
-            await TrayService.ExportToFileAsync(TrayModel);
-            ShowSuccessMessage("Tray data exported successfully!");
+            // Show loading state
+            ShowInfoMessage("Generating documentation...");
+
+            // Step 1: Save canvas as image first
+            if (canvas != null && _canvasInitialized && _jsRuntimeReady)
+            {
+                try
+                {
+                    Console.WriteLine("Starting canvas image export...");
+                    await TrayService.ExportCanvasImageAsync(canvas, TrayModel.Name);
+                    Console.WriteLine("Canvas image exported successfully");
+                    ShowInfoMessage("Canvas saved, generating Word document...");
+                }
+                catch (Exception canvasEx) when (canvasEx.Message.Contains("canceled") || canvasEx.Message.Contains("timeout"))
+                {
+                    Console.WriteLine($"Canvas export failed: {canvasEx.Message}, trying fallback...");
+                    ShowInfoMessage("Primary canvas export failed, trying alternative method...");
+                    
+                    try
+                    {
+                        await ExportCanvasFallbackAsync();
+                        Console.WriteLine("Fallback canvas export succeeded");
+                        ShowInfoMessage("Canvas saved (fallback method), generating Word document...");
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        Console.WriteLine($"Fallback canvas export also failed: {fallbackEx.Message}");
+                        ShowErrorMessage("Failed to save canvas image. Proceeding with document generation...");
+                    }
+                }
+                catch (Exception canvasEx)
+                {
+                    Console.WriteLine($"Canvas export failed: {canvasEx.Message}");
+                    ShowErrorMessage("Failed to save canvas image. Proceeding with document generation...");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Canvas not ready for export, proceeding without canvas image");
+                ShowInfoMessage("Canvas not ready, generating Word document only...");
+            }
+
+            // Step 2: Generate Word document (which will include the saved image)
+            try
+            {
+                Console.WriteLine("Starting Word document generation...");
+                await TrayService.ExportToFileAsync(TrayModel);
+                Console.WriteLine("Word document generated successfully");
+                ShowSuccessMessage("Tray documentation exported successfully!");
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine($"Template file not found: {ex.Message}");
+                ShowErrorMessage($"Template file not found. Please ensure the appropriate template file exists in the wwwroot directory.");
+                throw;
+            }
+            catch (Exception docEx)
+            {
+                Console.WriteLine($"Word document generation failed: {docEx.Message}");
+                ShowErrorMessage($"Failed to generate Word document: {docEx.Message}");
+                throw;
+            }
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(ex, "exporting tray data");
+            Console.WriteLine($"Export error: {ex.Message}");
+            await HandleExceptionAsync(ex, "exporting tray documentation");
         }
+    }
+
+    protected async Task ExportCanvasOnly()
+    {
+        try
+        {
+            if (canvas != null && _canvasInitialized && _jsRuntimeReady)
+            {
+                ShowInfoMessage("Saving canvas image...");
+                Console.WriteLine("Starting canvas-only export...");
+                
+                // First try the extension method
+                try
+                {
+                    await TrayService.ExportCanvasImageAsync(canvas, TrayModel.Name);
+                    Console.WriteLine("Canvas-only export completed successfully");
+                    ShowSuccessMessage($"Canvas image saved successfully as {TrayModel.Name}.jpg");
+                    return;
+                }
+                catch (Exception ex) when (ex.Message.Contains("canceled") || ex.Message.Contains("timeout"))
+                {
+                    Console.WriteLine($"Extension method failed: {ex.Message}, trying fallback method...");
+                    ShowInfoMessage("Primary method failed, trying alternative approach...");
+                    
+                    // Fallback: Try direct canvas export without retry
+                    await ExportCanvasFallbackAsync();
+                    ShowSuccessMessage($"Canvas image saved successfully as {TrayModel.Name}.jpg (fallback method)");
+                }
+            }
+            else
+            {
+                var issues = new List<string>();
+                if (canvas == null) issues.Add("Canvas is null");
+                if (!_canvasInitialized) issues.Add("Canvas not initialized");
+                if (!_jsRuntimeReady) issues.Add("JSRuntime not ready");
+                
+                var errorMsg = $"Canvas is not ready for export: {string.Join(", ", issues)}";
+                Console.WriteLine(errorMsg);
+                ShowErrorMessage("Canvas is not ready for export. Please wait for the drawing to complete.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Canvas export error: {ex.Message}");
+            await HandleExceptionAsync(ex, "exporting canvas image");
+        }
+    }
+
+    private async Task ExportCanvasFallbackAsync()
+    {
+        try
+        {
+            Console.WriteLine("Using fallback canvas export method...");
+            
+            // Method 1: Try direct canvas API
+            try
+            {
+                var dataUrl = await canvas!.ToDataURLAsync("image/jpeg", 0.8);
+                
+                if (!string.IsNullOrEmpty(dataUrl) && dataUrl.Contains("base64,"))
+                {
+                    await SaveCanvasDataAsync(dataUrl);
+                    Console.WriteLine($"Fallback method 1 (direct API) completed: {dataUrl.Length} chars");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fallback method 1 failed: {ex.Message}");
+            }
+            
+            // Method 2: Try JavaScript helper
+            try
+            {
+                Console.WriteLine("Trying JavaScript helper method...");
+                
+                // Get canvas info for debugging
+                var canvasInfo = await JSRuntime.InvokeAsync<object>("canvasHelper.getCanvasInfo", "canvasId");
+                Console.WriteLine($"Canvas info: {System.Text.Json.JsonSerializer.Serialize(canvasInfo)}");
+                
+                // Validate canvas first
+                var isValid = await JSRuntime.InvokeAsync<bool>("canvasHelper.validateCanvas", "canvasId");
+                if (!isValid)
+                {
+                    throw new InvalidOperationException("Canvas validation failed via JavaScript");
+                }
+                
+                // Export using JavaScript helper
+                var dataUrl = await JSRuntime.InvokeAsync<string>("canvasHelper.exportCanvas", "canvasId", "image/jpeg", 0.8);
+                
+                if (!string.IsNullOrEmpty(dataUrl) && dataUrl.Contains("base64,"))
+                {
+                    await SaveCanvasDataAsync(dataUrl);
+                    Console.WriteLine($"Fallback method 2 (JavaScript helper) completed: {dataUrl.Length} chars");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fallback method 2 failed: {ex.Message}");
+            }
+            
+            throw new InvalidOperationException("All fallback methods failed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"All fallback canvas export methods failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    private async Task SaveCanvasDataAsync(string dataUrl)
+    {
+        var base64Data = dataUrl.Split(',')[1];
+        var imageBytes = Convert.FromBase64String(base64Data);
+        
+        string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        string imagesPath = Path.Combine(wwwrootPath, "images");
+        
+        if (!Directory.Exists(imagesPath))
+        {
+            Directory.CreateDirectory(imagesPath);
+        }
+        
+        string imagePath = Path.Combine(imagesPath, $"{TrayModel.Name}.jpg");
+        await File.WriteAllBytesAsync(imagePath, imageBytes);
+        
+        Console.WriteLine($"Canvas data saved to: {imagePath} ({imageBytes.Length} bytes)");
+    }
+
+    protected async Task DebugCanvasState()
+    {
+        try
+        {
+            var debugInfo = new List<string>
+            {
+                $"Canvas null: {canvas == null}",
+                $"Canvas initialized: {_canvasInitialized}",
+                $"JSRuntime ready: {_jsRuntimeReady}",
+                $"Data loaded: {_dataLoaded}",
+                $"Should redraw: {_shouldRedraw}",
+                $"Tray dimensions: {TrayModel.Width}x{TrayModel.Height}",
+                $"Tray purpose: {TrayModel.Purpose}",
+                $"Expected template: {GetExpectedTemplate(TrayModel.Purpose)}",
+                $"Cables count: {CablesOnTray.Count}",
+                $"Bundles count: {CableBundles.Count}"
+            };
+
+            var message = string.Join("\n", debugInfo);
+            Console.WriteLine($"Canvas Debug Info:\n{message}");
+            
+            ShowInfoMessage("Debug info logged to console");
+            
+            // Try a simple canvas test if possible
+            if (canvas != null && _canvasInitialized && _jsRuntimeReady)
+            {
+                try
+                {
+                    await using var ctx = await canvas.GetContext2DAsync();
+                    if (ctx != null)
+                    {
+                        await ctx.SaveAsync();
+                        await ctx.RestoreAsync();
+                        ShowSuccessMessage("Canvas context test passed!");
+                    }
+                    else
+                    {
+                        ShowErrorMessage("Canvas context is null");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowErrorMessage($"Canvas context test failed: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Debug error: {ex.Message}");
+            ShowErrorMessage($"Debug failed: {ex.Message}");
+        }
+    }
+
+    private string GetExpectedTemplate(string trayPurpose)
+    {
+        return trayPurpose == "Type A (Pink color) for MV cables" 
+            ? "ReportMacroTemplate_MV.docx" 
+            : "ReportMacroTemplate_Space.docx";
     }
 
     protected void GoToPreviousTray()
