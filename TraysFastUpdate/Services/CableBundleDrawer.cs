@@ -1,13 +1,13 @@
 using Excubo.Blazor.Canvas.Contexts;
 using Excubo.Blazor.Canvas;
+using TraysFastUpdate.Common.Constants;
 using TraysFastUpdate.Models;
+using TraysFastUpdate.Services.Drawing;
 
 namespace TraysFastUpdate.Services;
 
-public class CableBundleDrawer
+public class CableBundleDrawer : ICableBundleDrawer
 {
-    private const int CProfileHeight = 15;
-
     public async Task<(double leftStartX, double bottomStartY)> DrawPowerBundlesAsync(Context2D ctx, TrayDrawingData data, 
         Dictionary<string, List<Cable>> bundles, double leftStartX, double bottomStartY, double spacing)
     {
@@ -15,11 +15,11 @@ public class CableBundleDrawer
 
         foreach (var sortedBundle in sortedBundles)
         {
-            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - CProfileHeight, 1, sortedBundle.Value, "Power");
+            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - TrayConstants.CProfileHeight, 1, sortedBundle.Value, TrayConstants.CablePurposes.Power);
             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
             var biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
 
-            if (sortedBundle.Key == "40.1-45" || sortedBundle.Key == "45-60")
+            if (sortedBundle.Key == TrayConstants.BundleTypes.Range40_1_45 || sortedBundle.Key == TrayConstants.BundleTypes.Range45_1_60)
             {
                 (leftStartX, bottomStartY) = await DrawHexagonalPackingAsync(ctx, data, sortedCables, leftStartX, bottomStartY, spacing);
             }
@@ -35,7 +35,7 @@ public class CableBundleDrawer
             }
 
             leftStartX = 50 + spacing + data.BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-            bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+            bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
         }
 
         return (leftStartX, bottomStartY);
@@ -48,7 +48,7 @@ public class CableBundleDrawer
 
         foreach (var sortedBundle in sortedBundles)
         {
-            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - CProfileHeight, 1, sortedBundle.Value, "Control");
+            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - TrayConstants.CProfileHeight, 1, sortedBundle.Value, TrayConstants.CablePurposes.Control);
             var sortedCables = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).ToList();
             var biggestCableInBundle = sortedBundle.Value.OrderByDescending(x => x.CableType.Diameter).First();
 
@@ -61,7 +61,7 @@ public class CableBundleDrawer
             }
 
             rightStartX = 50 + data.Tray.Width * data.CanvasScale - spacing - data.BottomRowControlCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-            bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+            bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
         }
 
         return (rightStartX, bottomStartY);
@@ -87,9 +87,9 @@ public class CableBundleDrawer
 
         foreach (var sortedBundle in sortedBundles)
         {
-            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - CProfileHeight, 1, sortedBundle.Value, "VFD");
+            var (rows, columns) = CalculateRowsAndColumns(data.Tray.Height - TrayConstants.CProfileHeight, 1, sortedBundle.Value, TrayConstants.CablePurposes.VFD);
 
-            if (sortedBundle.Key == "30.1-40" || sortedBundle.Key == "40.1-45")
+            if (sortedBundle.Key == TrayConstants.BundleTypes.Range30_1_40 || sortedBundle.Key == TrayConstants.BundleTypes.Range40_1_45)
             {
                 rightStartX = await DrawGroupedVfdCablesAsync(ctx, data, sortedBundle.Value, rightStartX, bottomStartY, spacing, sortedBundles, sortedBundle);
             }
@@ -100,7 +100,7 @@ public class CableBundleDrawer
         }
 
         rightStartX = 50 + data.Tray.Width * data.CanvasScale - spacing - data.BottomRowVFDCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-        bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+        bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
 
         return (rightStartX, bottomStartY);
     }
@@ -112,7 +112,7 @@ public class CableBundleDrawer
         foreach (var cable in sortedCables)
         {
             int cableIndex = sortedCables.IndexOf(cable);
-            if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45 && data.Tray.Height - CProfileHeight > 45)
+            if (cableIndex != 0 && cableIndex % 2 == 0 && cable.CableType.Diameter <= 45 && data.Tray.Height - TrayConstants.CProfileHeight > 45)
             {
                 bottomStartY -= ((cable.CableType.Diameter * data.CanvasScale) / 2) * (Math.Sqrt(3) / 2) + 
                                ((cable.CableType.Diameter * data.CanvasScale) / 2) - spacing * 2;
@@ -122,7 +122,7 @@ public class CableBundleDrawer
             }
 
             await DrawCableAsync(ctx, data, cable, leftStartX, bottomStartY);
-            bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+            bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
 
             if (row == 0)
             {
@@ -134,7 +134,7 @@ public class CableBundleDrawer
             {
                 row = 0;
                 leftStartX = 50 + spacing + data.BottomRowPowerCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-                bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+                bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
             }
         }
 
@@ -163,7 +163,7 @@ public class CableBundleDrawer
                 row = 0;
                 column++;
                 leftStartX = 50 + spacing + bottomRowCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-                bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+                bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
             }
         }
 
@@ -196,7 +196,7 @@ public class CableBundleDrawer
             {
                 row = 0;
                 rightStartX = 50 + data.Tray.Width * data.CanvasScale - spacing - bottomRowCables.Sum(x => x.CableType.Diameter + 1) * data.CanvasScale;
-                bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+                bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
             }
         }
 
@@ -226,7 +226,7 @@ public class CableBundleDrawer
             }
 
             await DrawCableAsync(ctx, data, cable, leftStartX, bottomStartY);
-            bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+            bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
 
             if (row == 0)
             {
@@ -241,7 +241,7 @@ public class CableBundleDrawer
                 leftStartBottom += (cable.CableType.Diameter + 1) * data.CanvasScale * 2;
                 leftStartX = leftStartBottom;
                 leftStartTop += (cable.CableType.Diameter + 1) * data.CanvasScale * 4;
-                bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+                bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
             }
         }
 
@@ -333,7 +333,7 @@ public class CableBundleDrawer
                 row = 0;
                 column++;
                 rightStartX -= cable.CableType.Diameter * data.CanvasScale + spacing;
-                bottomStartY = 50 + (data.Tray.Height - CProfileHeight) * data.CanvasScale;
+                bottomStartY = 50 + (data.Tray.Height - TrayConstants.CProfileHeight) * data.CanvasScale;
             }
         }
         
@@ -349,6 +349,11 @@ public class CableBundleDrawer
     private async Task DrawCableAsync(Context2D ctx, TrayDrawingData data, Cable cable, double x, double y)
     {
         double radius = cable.CableType.Diameter / 2 * data.CanvasScale;
+
+        // Set the line width to match the C-profile thickness
+        double lineWidth = TrayConstants.CProfileHeight * data.CanvasScale;
+        await ctx.LineWidthAsync(lineWidth);
+
         await ctx.BeginPathAsync();
         await ctx.ArcAsync(x + radius, y - radius, radius, 0, Math.PI * 2);
         await ctx.ClosePathAsync();
@@ -389,17 +394,17 @@ public class CableBundleDrawer
         int columns = 0;
         double diameter = bundle.Max(x => x.CableType.Diameter);
 
-        if (purpose == "Power")
+        if (purpose == TrayConstants.CablePurposes.Power)
         {
             rows = Math.Min((int)Math.Floor(trayHeight / diameter), 2);
             columns = (int)Math.Floor((double)bundle.Count / rows);
         }
-        else if (purpose == "Control")
+        else if (purpose == TrayConstants.CablePurposes.Control)
         {
             rows = Math.Min((int)Math.Floor(trayHeight / diameter), 2);
             columns = Math.Min((int)Math.Ceiling((double)bundle.Count / rows), 20);
         }
-        else if (purpose == "VFD")
+        else if (purpose == TrayConstants.CablePurposes.VFD)
         {
             rows = Math.Min((int)Math.Floor(trayHeight / diameter), 2);
             columns = (int)Math.Floor((double)bundle.Count / rows);
