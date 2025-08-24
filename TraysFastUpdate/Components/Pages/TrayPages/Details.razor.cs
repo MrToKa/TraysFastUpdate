@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Timers;
 using Excubo.Blazor.Canvas;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -9,7 +5,6 @@ using TraysFastUpdate.Models;
 using TraysFastUpdate.Services;
 using TraysFastUpdate.Services.Contracts;
 using TraysFastUpdate.Services.Drawing;
-using TraysFastUpdate.Extensions;
 
 namespace TraysFastUpdate.Components.Pages.TrayPages;
 
