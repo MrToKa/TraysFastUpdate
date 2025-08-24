@@ -4,7 +4,10 @@ using TraysFastUpdate.Components;
 using TraysFastUpdate.Data;
 using TraysFastUpdate.Data.Repositories;
 using TraysFastUpdate.Services;
+using TraysFastUpdate.Services.Calculations;
 using TraysFastUpdate.Services.Contracts;
+using TraysFastUpdate.Services.Drawing;
+using TraysFastUpdate.Services.Export;
 
 namespace TraysFastUpdate
 {
@@ -21,14 +24,29 @@ namespace TraysFastUpdate
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            // Repository
             builder.Services.AddScoped<ITraysFastUpdateDbRepository, TraysFastUpdateDbRepository>();
+            
+            // Core business services
             builder.Services.AddScoped<ICableTypeService, CableTypeService>();
             builder.Services.AddScoped<ICableService, CableService>();
             builder.Services.AddScoped<ITrayService, TrayService>();
             
-            // Add new drawing and navigation services
-            builder.Services.AddScoped<TrayDrawingService>();
+            // Calculation services
+            builder.Services.AddScoped<ITrayCalculationService, TrayCalculationService>();
+            
+            // Drawing services
+            builder.Services.AddScoped<ITrayDrawingService, TrayDrawingService>();
+            builder.Services.AddScoped<ICableBundleDrawer, CableBundleDrawer>();
+            
+            // Navigation services
             builder.Services.AddScoped<TrayNavigationService>();
+            
+            // Export services
+            builder.Services.AddScoped<IFileExportService, FileExportService>();
+            builder.Services.AddScoped<IWordExportService, WordExportService>();
+            builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
+            builder.Services.AddScoped<ServerSideCanvasService>(); // Add this line
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<TraysFastUpdateDbContext>(options =>
@@ -50,7 +68,7 @@ namespace TraysFastUpdate
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-    app.UseMigrationsEndPoint();
+                app.UseMigrationsEndPoint();
             }
 
             if (app.Environment.IsDevelopment())
