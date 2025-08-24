@@ -13,7 +13,7 @@ namespace TraysFastUpdate.Services.Contracts
         Task UploadFromFileAsync(IBrowserFile file);
         Task ExportToFileAsync(Tray tray);
         Task<int> GetTraysCountAsync();        
-        Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName);
+        Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName, bool rotate = true);
         Task ExportTrayTableEntriesAsync();
     }
 }

@@ -201,9 +201,9 @@ namespace TraysFastUpdate.Services
             await _fileExportService.ExportTrayDocumentationAsync(tray);
         }
 
-        public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName)
+        public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName, bool rotate = true)
         {
-            await _fileExportService.ExportCanvasImageAsync(canvas, trayName);
+            await _fileExportService.ExportCanvasImageAsync(canvas, trayName, rotate);
         }
 
         public async Task ExportTrayTableEntriesAsync()

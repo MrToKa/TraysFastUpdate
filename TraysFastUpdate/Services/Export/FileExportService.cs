@@ -4,6 +4,7 @@ using TraysFastUpdate.Services.Export;
 using TraysFastUpdate.Extensions;
 using TraysFastUpdate.Services.Contracts;
 using SkiaSharp;
+using Microsoft.JSInterop;
 
 namespace TraysFastUpdate.Services.Export;
 
@@ -13,14 +14,16 @@ public class FileExportService : IFileExportService
     private readonly IExcelExportService _excelExportService;
     private readonly ServerSideCanvasService _serverSideCanvasService;
     private readonly ICableService _cableService;
+    private readonly IJSRuntime _jsRuntime;
 
     public FileExportService(IWordExportService wordExportService, IExcelExportService excelExportService, 
-        ServerSideCanvasService serverSideCanvasService, ICableService cableService)
+        ServerSideCanvasService serverSideCanvasService, ICableService cableService, IJSRuntime jsRuntime)
     {
         _wordExportService = wordExportService;
         _excelExportService = excelExportService;
         _serverSideCanvasService = serverSideCanvasService;
         _cableService = cableService;
+        _jsRuntime = jsRuntime;
     }
 
     public async Task ExportTrayDocumentationAsync(Tray tray)
@@ -70,11 +73,11 @@ public class FileExportService : IFileExportService
         }
     }
 
-    public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName)
+    public async Task ExportCanvasImageAsync(Excubo.Blazor.Canvas.Canvas canvas, string trayName, bool rotate = true)
     {
         try
         {
-            Console.WriteLine($"Starting canvas image export for tray: {trayName}");
+            Console.WriteLine($"Starting server-side canvas image export for tray: {trayName} with 90° CCW rotation");
             
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             string imagesPath = Path.Combine(wwwrootPath, "images");
@@ -86,7 +89,8 @@ public class FileExportService : IFileExportService
                 Console.WriteLine($"Created images directory: {imagesPath}");
             }
 
-            string imagePath = Path.Combine(imagesPath, $"{trayName}.jpg");
+            string fileName = $"{trayName}.jpg";
+            string imagePath = Path.Combine(imagesPath, fileName);
             Console.WriteLine($"Target image path: {imagePath}");
             
             // Delete existing file if it exists to avoid conflicts
@@ -96,16 +100,72 @@ public class FileExportService : IFileExportService
                 Console.WriteLine($"Deleted existing image file: {imagePath}");
             }
             
-            // Try canvas export with enhanced retry logic
-            Console.WriteLine("Converting canvas to data URL...");
-            var imageData = await canvas.ToDataURLWithRetryAsync("image/jpeg", 0.9);
-            Console.WriteLine($"Canvas data URL length: {imageData?.Length ?? 0}");
-            
-            if (string.IsNullOrEmpty(imageData) || !imageData.Contains("base64,"))
+            // Use JavaScript server-side export with rotation
+            try
             {
-                throw new InvalidOperationException("Canvas export returned invalid data");
+                Console.WriteLine("Using JavaScript server-side export with rotation...");
+                var serverResult = await _jsRuntime.InvokeAsync<object>("canvasHelper.exportCanvasToServer", "canvasId", trayName, "image/jpeg", 0.9, rotate);
+                Console.WriteLine($"JavaScript server-side export result: {System.Text.Json.JsonSerializer.Serialize(serverResult)}");
+                
+                // Check if file was created by server endpoint
+                if (File.Exists(imagePath))
+                {
+                    var fileInfo = new FileInfo(imagePath);
+                    Console.WriteLine($"Canvas image saved via server endpoint: {imagePath} ({fileInfo.Length} bytes)");
+                    
+                    var qualityAssessment = AssessImageQuality(null, fileInfo.Length);
+                    Console.WriteLine($"Quality assessment: {qualityAssessment}");
+                    return; // Success - exit early
+                }
+                else
+                {
+                    throw new InvalidOperationException("Server endpoint did not create the image file");
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"JavaScript server-side export failed: {ex.Message}");
+                
+                // Fallback to server-side rendering as last resort
+                Console.WriteLine("Falling back to server-side rendering...");
+                await ExportCanvasImageServerSideAsync(trayName);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Canvas export failed completely: {ex.Message}");
+            Console.WriteLine($"Attempting server-side rendering as final fallback...");
             
+            // Final fallback to server-side rendering
+            await ExportCanvasImageServerSideAsync(trayName);
+        }
+    }
+    
+    private string AssessImageQuality(string imageData, long fileSize)
+    {
+        try
+        {
+            var dataLength = imageData?.Length ?? 0;
+            
+            if (fileSize > 50000)
+                return "High quality (>50KB)";
+            else if (fileSize > 25000)
+                return "Good quality (25-50KB)";
+            else if (fileSize > 10000)
+                return "Medium quality (10-25KB)";
+            else
+                return "Low quality (<10KB)";
+        }
+        catch
+        {
+            return "Unknown quality";
+        }
+    }
+
+    private async Task SaveImageDataAsync(string imageData, string imagePath)
+    {
+        try
+        {
             // Remove the data URL prefix (data:image/jpeg;base64,)
             var base64Data = imageData.Split(',')[1];
             var imageBytes = Convert.FromBase64String(base64Data);
@@ -113,25 +173,12 @@ public class FileExportService : IFileExportService
             
             // Save the image to the file system
             await File.WriteAllBytesAsync(imagePath, imageBytes);
-            
-            // Verify file was created
-            if (File.Exists(imagePath))
-            {
-                var fileInfo = new FileInfo(imagePath);
-                Console.WriteLine($"Canvas image saved successfully: {imagePath} ({fileInfo.Length} bytes)");
-            }
-            else
-            {
-                throw new InvalidOperationException("Image file was not created successfully");
-            }
+            Console.WriteLine($"Image data saved to: {imagePath}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Canvas export failed: {ex.Message}");
-            Console.WriteLine($"Attempting server-side rendering as fallback...");
-            
-            // Fallback to server-side rendering
-            await ExportCanvasImageServerSideAsync(trayName);
+            Console.WriteLine($"Error saving image data: {ex.Message}");
+            throw;
         }
     }
 
@@ -180,12 +227,24 @@ public class FileExportService : IFileExportService
     {
         try
         {
+            Console.WriteLine($"Creating placeholder image for tray: {trayName}");
+            
             using var surface = SKSurface.Create(new SKImageInfo(800, 600));
             var canvas = surface.Canvas;
             
             canvas.Clear(SKColors.White);
             
-            using var paint = new SKPaint
+            // Draw border
+            using var borderPaint = new SKPaint
+            {
+                Color = SKColors.Black,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2
+            };
+            canvas.DrawRect(10, 10, 780, 580, borderPaint);
+            
+            // Draw title
+            using var titlePaint = new SKPaint
             {
                 Color = SKColors.Black,
                 TextSize = 24,
@@ -193,9 +252,30 @@ public class FileExportService : IFileExportService
                 Typeface = SKTypeface.FromFamilyName("Arial"),
                 TextAlign = SKTextAlign.Center
             };
+            canvas.DrawText($"Tray: {trayName}", 400, 100, titlePaint);
             
-            canvas.DrawText($"Tray: {trayName}", 400, 300, paint);
-            canvas.DrawText("Canvas export unavailable", 400, 350, paint);
+            // Draw message
+            using var messagePaint = new SKPaint
+            {
+                Color = SKColors.Gray,
+                TextSize = 18,
+                IsAntialias = true,
+                Typeface = SKTypeface.FromFamilyName("Arial"),
+                TextAlign = SKTextAlign.Center
+            };
+            canvas.DrawText("Canvas export temporarily unavailable", 400, 300, messagePaint);
+            canvas.DrawText("Please try again or contact support", 400, 330, messagePaint);
+            
+            // Add timestamp
+            using var timestampPaint = new SKPaint
+            {
+                Color = SKColors.LightGray,
+                TextSize = 12,
+                IsAntialias = true,
+                Typeface = SKTypeface.FromFamilyName("Arial"),
+                TextAlign = SKTextAlign.Center
+            };
+            canvas.DrawText($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}", 400, 550, timestampPaint);
             
             using var image = surface.Snapshot();
             using var data = image.Encode(SKEncodedImageFormat.Jpeg, 90);
@@ -211,7 +291,7 @@ public class FileExportService : IFileExportService
             string imagePath = Path.Combine(imagesPath, $"{trayName}.jpg");
             await File.WriteAllBytesAsync(imagePath, data.ToArray());
             
-            Console.WriteLine($"Placeholder image created: {imagePath}");
+            Console.WriteLine($"Placeholder image created: {imagePath} ({data.Size} bytes)");
         }
         catch (Exception ex)
         {

@@ -351,7 +351,7 @@ public class CableBundleDrawer : ICableBundleDrawer
         double radius = cable.CableType.Diameter / 2 * data.CanvasScale;
 
         // Set the line width to match the C-profile thickness
-        double lineWidth = TrayConstants.CProfileHeight * data.CanvasScale;
+        double lineWidth = 1;
         await ctx.LineWidthAsync(lineWidth);
 
         await ctx.BeginPathAsync();
