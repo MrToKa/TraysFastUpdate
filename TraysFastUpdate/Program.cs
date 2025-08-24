@@ -24,6 +24,9 @@ namespace TraysFastUpdate
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            // Add API controllers support
+            builder.Services.AddControllers();
+
             // Repository
             builder.Services.AddScoped<ITraysFastUpdateDbRepository, TraysFastUpdateDbRepository>();
             
@@ -81,6 +84,9 @@ namespace TraysFastUpdate
 
             app.UseStaticFiles();
             app.UseAntiforgery();
+
+            // Map API controllers
+            app.MapControllers();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

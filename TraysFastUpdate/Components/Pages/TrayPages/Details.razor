@@ -186,22 +186,6 @@ else
                           Disabled="@(!_canvasInitialized || !_jsRuntimeReady)">
                     Export Documentation
                 </MudButton>
-                
-                <MudButton Variant="Variant.Outlined" 
-                          Color="Color.Primary" 
-                          OnClick="@ExportCanvasOnly"
-                          StartIcon="@Icons.Material.Filled.Image"
-                          Disabled="@(!_canvasInitialized || !_jsRuntimeReady)">
-                    Save Canvas Image
-                </MudButton>
-                
-                <MudButton Variant="Variant.Text" 
-                          Color="Color.Info" 
-                          OnClick="@DebugCanvasState"
-                          StartIcon="@Icons.Material.Filled.BugReport"
-                          Size="Size.Small">
-                    Debug Canvas
-                </MudButton>
             </div>
 
             <MudButton OnClick="GoToNextTray"
