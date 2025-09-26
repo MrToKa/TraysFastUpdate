@@ -31,7 +31,7 @@
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>    
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SimCardDownload" DropShadow="false" OnClick="@(() => ExportCablesTableAsync())">Export Full Report</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SimCardDownload" DropShadow="false" OnClick="@(() => ExportCurrentCablesTableAsync())">Export Full Report</MudButton>
 </MudItem>
 
 <MudPaper Elevation="0" Class="pa-1 ma-2" Style="@($"background: #BDBDBD;")">
@@ -152,11 +152,11 @@
         await CommittedItemChanges(item);
     }
 
-    private async Task ExportCablesTableAsync()
+    private async Task ExportCurrentCablesTableAsync()
     {
         try
         {
-            await CableService.ExportCablesTableEntriesAsync();
+            await CableService.ExportCurrentCablesTableEntriesAsync();
             Snackbar.Add("Cable table was exported successfully!", Severity.Success);
         }
         catch (Exception ex)

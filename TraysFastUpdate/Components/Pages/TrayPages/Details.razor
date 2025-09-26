@@ -73,6 +73,7 @@ else
                             @(CablesOnTray.IndexOf(context.Item) + 1)
                         </CellTemplate>
                     </TemplateColumn>
+                    <PropertyColumn Property="x => x.Id" Title="Cable Id" Hideable="false" />
                     <PropertyColumn Property="x => x.Tag" Title="Cable Tag" Hideable="false" />
                     <PropertyColumn Property="x => x.CableType.Type" Title="Cable Type" Hideable="false" />
                     <PropertyColumn Property="x => x.CableType.Purpose" Title="Cable Purpose" Hideable="false" />

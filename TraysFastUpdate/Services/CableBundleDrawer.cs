@@ -397,6 +397,7 @@ public class CableBundleDrawer : ICableBundleDrawer
         if (purpose == TrayConstants.CablePurposes.Power)
         {
             rows = Math.Min((int)Math.Floor(trayHeight / diameter), 2);
+            //rows = 1;
             columns = (int)Math.Floor((double)bundle.Count / rows);
         }
         else if (purpose == TrayConstants.CablePurposes.Control)

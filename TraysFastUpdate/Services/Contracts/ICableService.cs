@@ -20,6 +20,6 @@ namespace TraysFastUpdate.Services.Contracts
         Task<List<Cable>> GetCablesOnTrayAsync(Tray tray);
         Task<Dictionary<string, Dictionary<string, List<Cable>>>> GetCablesBundlesOnTrayAsync(Tray tray);
 
-        Task ExportCablesTableEntriesAsync();
+        Task ExportCurrentCablesTableEntriesAsync();
     }
 }

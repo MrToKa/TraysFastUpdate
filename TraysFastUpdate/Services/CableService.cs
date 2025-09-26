@@ -168,6 +168,7 @@ namespace TraysFastUpdate.Services
         {
             var cables = await _repository.All<Cable>()
                 .Include(c => c.CableType)
+                .OrderBy(c => c.Id)
                 .ToListAsync();
 
             var filteredCables = cables
@@ -244,7 +245,7 @@ namespace TraysFastUpdate.Services
             }  
         }
 
-        public async Task ExportCablesTableEntriesAsync()
+        public async Task ExportCurrentCablesTableEntriesAsync()
         {
             string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             if (File.Exists(Path.Combine(wwwrootPath, "Cables.xlsx")))

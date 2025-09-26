@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using TraysFastUpdate.Common.Constants;
 using TraysFastUpdate.Models;
@@ -43,7 +43,7 @@ public class SupportsWeightCalculator
     private static string BuildSupportsCountResult(double length, double distance, int supportsCount)
     {
         var sb = new StringBuilder();
-        sb.Append($"({Math.Round(length / 1000, 3)} * 1000) / {distance} ? ");
+        sb.Append($"({Math.Round(length / 1000, 3)} * 1000) / {distance} ≈ ");
         sb.Append($"{Math.Round(length / 1000 / distance + 1, 3)} = {supportsCount} [pcs.]");
         return sb.ToString();
     }

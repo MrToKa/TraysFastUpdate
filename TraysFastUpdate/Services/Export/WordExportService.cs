@@ -191,7 +191,7 @@ public class WordExportService : IWordExportService
 
                 // Locate the placeholder
                 var placeholderText = body.Descendants<W.Text>()
-                    .FirstOrDefault(t => t.Text.Trim() == "{CablesTable}");
+                    .FirstOrDefault(t => t.Text.Trim() == "CurrentCablesTable");
 
                 if (placeholderText != null)
                 {
@@ -327,9 +327,9 @@ public class WordExportService : IWordExportService
                     if (mainPart == null) return;
 
                     // Replace placeholders with images
-                    ReplacePlaceholderWithImage(mainPart, "{DiagramTrayPic}", diagramImagePath);
-                    ReplacePlaceholderWithImage(mainPart, "{TrayPicture}", trayImagePath);
-                    ReplacePlaceholderWithImage(mainPart, "{FillPicture}", fillPicture);
+                    ReplacePlaceholderWithImage(mainPart, "DiagramTrayPic", diagramImagePath);
+                    ReplacePlaceholderWithImage(mainPart, "TrayPicture", trayImagePath);
+                    ReplacePlaceholderWithImage(mainPart, "FillPicture", fillPicture);
 
                     wordDoc.Save();
                     Console.WriteLine("Image replacements completed");
