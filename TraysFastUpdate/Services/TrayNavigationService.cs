@@ -15,14 +15,9 @@ public class TrayNavigationService
     public async Task<TrayNavigationData> InitializeNavigationAsync(int currentId)
     {
         var trays = await _trayService.GetTraysAsync();
-        var trayIds = trays.OrderBy(t => t.Id).Select(t => t.Id).ToList();
+        var sortedTrays = trays.OrderBy(t => t.Name).ToList();
+        var trayIds = sortedTrays.Select(t => t.Id).ToList();
         var currentIndex = trayIds.IndexOf(currentId);
-        
-        if (currentIndex == -1 && trayIds.Count > 0)
-        {
-            currentId = trayIds[0];
-            currentIndex = 0;
-        }
 
         return new TrayNavigationData
         {

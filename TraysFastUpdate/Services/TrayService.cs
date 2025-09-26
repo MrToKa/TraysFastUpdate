@@ -91,7 +91,7 @@ namespace TraysFastUpdate.Services
                 return new List<Tray>();
             }
 
-            return await _repository.All<Tray>().OrderBy(x => x.Id).ToListAsync();
+            return await _repository.All<Tray>().OrderBy(x => x.Name).ToListAsync();
         }
 
         public async Task UpdateTrayAsync(Tray tray)
@@ -210,7 +210,5 @@ namespace TraysFastUpdate.Services
         {
             await _fileExportService.ExportTrayTableEntriesAsync();
         }
-
-        // ... keep existing Word export methods for now but consider moving to separate service
     }
 }

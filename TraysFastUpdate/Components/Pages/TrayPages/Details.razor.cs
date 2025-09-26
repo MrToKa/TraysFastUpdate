@@ -363,16 +363,6 @@ public partial class Details : IDisposable
         }
     }
 
-    protected async Task ExportCanvasOnly()
-    {
-        // Method removed as per request
-    }
-
-    protected async Task DebugCanvasState()
-    {
-        // Method removed as per request
-    }
-
     private async Task ExportCanvasFallbackAsync(bool rotate = true)
     {
         try
